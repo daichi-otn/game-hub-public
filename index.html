@@ -372,6 +372,20 @@
     <script src="games-data.js"></script>
     <script>
 
+        // アイコンが画像ファイルのパスなら画像を、そうでなければ絵文字をそのまま表示する
+        function setIcon(el, icon) {
+            el.textContent = '';
+            if (/\.(png|jpe?g|gif|webp|svg)$/i.test(icon)) {
+                const img = document.createElement('img');
+                img.src = icon;
+                img.alt = '';
+                img.style.cssText = 'width:70%;height:70%;object-fit:contain';
+                el.appendChild(img);
+            } else {
+                el.textContent = icon;
+            }
+        }
+
         const STATUS_LABEL = { live: "公開中", wip: "準備中", local: "ミニ作品" };
         const FILTERS = ["すべて", "公開中", "準備中", "ミニ作品"];
 
@@ -442,7 +456,7 @@
             const thumb = document.createElement("div");
             thumb.className = "thumb";
             thumb.style.background = "linear-gradient(135deg, " + game.color + ", #0e1116)";
-            thumb.textContent = game.icon;
+            setIcon(thumb, game.icon);
 
             const body = document.createElement("div");
             body.className = "tile-body";
@@ -494,7 +508,7 @@
                 const icon = document.createElement("div");
                 icon.className = "detail-icon";
                 icon.style.background = "linear-gradient(135deg, " + game.color + ", #0e1116)";
-                icon.textContent = game.icon;
+                setIcon(icon, game.icon);
 
                 const info = document.createElement("div");
 
