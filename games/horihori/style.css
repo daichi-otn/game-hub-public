@@ -1,0 +1,116 @@
+:root {
+    /* ---- カラートークン (docs/external-design/tone-and-manner.md) ---- */
+    --color-bg: #14101f;
+    --color-black: #000;
+    --color-panel: #241a38;
+    --color-panel-light: #34264e;
+    --color-panel-glass: rgba(28, 20, 46, 0.88);
+    --color-overlay: rgba(10, 6, 20, 0.66);
+    --color-border: #5a4690;
+    --color-text: #fff4d6;
+    --color-muted: #b4a4d4;
+    --color-gold: #ffd23f;
+    --color-gold-dark: #c8901a;
+    --color-accent: #ff7a1a;
+    --color-cyan: #35e0ff;
+    --color-danger: #ff3b5c;
+    --color-ok: #3bff8a;
+    --color-ruby: #ff3b6b;
+    --color-diamond: #b8f4ff;
+    --color-ink: #14101f;
+    --color-shadow: rgba(0, 0, 0, 0.55);
+    --color-glow-gold: rgba(255, 210, 63, 0.6);
+    --color-glow-accent: rgba(255, 122, 26, 0.6);
+    --color-glow-cyan: rgba(53, 224, 255, 0.55);
+    --color-glow-danger: rgba(255, 59, 92, 0.6);
+    --font-base: 'DotGothic16', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: var(--color-black);
+    color: var(--color-text);
+    font-family: var(--font-base);
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+#root, #app {
+    width: 100%;
+    height: 100%;
+}
+
+#app {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 16:9 のステージ。UI は container query 単位(cqw)で Phaser キャンバスと同じ比率に拡縮する */
+.stage {
+    position: relative;
+    width: min(100vw, calc(100vh * 16 / 9));
+    aspect-ratio: 16 / 9;
+    container-type: size;
+    overflow: hidden;
+    background: var(--color-bg);
+}
+
+#game-container {
+    position: absolute;
+    inset: 0;
+}
+
+#game-container canvas {
+    display: block;
+    image-rendering: pixelated;
+}
+
+/* React オーバーレイ。--px = 1280px 基準の 1 デザインピクセル */
+.ui-layer {
+    --px: 0.078125cqw;
+    --space-2xs: calc(4 * var(--px));
+    --space-xs: calc(8 * var(--px));
+    --space-sm: calc(12 * var(--px));
+    --space-md: calc(20 * var(--px));
+    --space-lg: calc(32 * var(--px));
+    --space-xl: calc(48 * var(--px));
+    --font-size-xs: calc(14 * var(--px));
+    --font-size-sm: calc(18 * var(--px));
+    --font-size-md: calc(24 * var(--px));
+    --font-size-lg: calc(36 * var(--px));
+    --font-size-xl: calc(56 * var(--px));
+    --font-size-xxl: calc(96 * var(--px));
+    --radius-base: calc(6 * var(--px));
+    --border-w: calc(3 * var(--px));
+    --shadow-tile: 0 calc(5 * var(--px)) 0 var(--color-shadow);
+    --shadow-tile-pressed: 0 calc(1 * var(--px)) 0 var(--color-shadow);
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    font-family: var(--font-base);
+}
+
+.ui-layer .interactive {
+    pointer-events: auto;
+}
+
+/* 全画面の中央寄せオーバーレイ */
+.ui-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.pixel-img {
+    image-rendering: pixelated;
+}
