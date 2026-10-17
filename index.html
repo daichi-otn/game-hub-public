@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAICHI-OTN GAME HUB</title>
+    <style>
+        :root {
+            --bg: #0e1116;
+            --panel: #171c24;
+            --panel-hi: #1f2631;
+            --line: #2a3340;
+            --text: #e8ecf2;
+            --muted: #8b95a5;
+            --accent: #5ac8fa;
+            --live: #34c759;
+            --wip: #ffb020;
+            --local: #b392f0;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body { margin: 0; padding: 0; }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            transition: opacity 0.4s ease;
+        }
+
+        body.fade-out { opacity: 0; }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--line);
+            position: sticky;
+            top: 0;
+            background: rgba(14, 17, 22, 0.9);
+            backdrop-filter: blur(8px);
+            z-index: 10;
+        }
+
+        .logo {
+            font-weight: 900;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+        }
+
+        .logo span { color: var(--accent); }
+
+        .stats {
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px 20px 48px;
+        }
+
+        /* 注目のゲーム */
+        .hero {
+            position: relative;
+            text-decoration: none;
+            color: var(--text);
+            border-radius: 20px;
+            padding: 36px 32px;
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            background: linear-gradient(135deg, #1d3b5c 0%, #2d1f5e 60%, #5a2a4a 100%);
+            border: 1px solid var(--line);
+            overflow: hidden;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 80% 20%, rgba(90, 200, 250, 0.35), transparent 50%);
+            pointer-events: none;
+        }
+
+        .hero:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .hero-label {
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .hero-title {
+            font-size: 2rem;
+            font-weight: 900;
+            margin: 0 0 8px;
+            position: relative;
+        }
+
+        .hero-desc {
+            margin: 0 0 16px;
+            color: #c9d3e0;
+            max-width: 560px;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        .play {
+            display: inline-block;
+            align-self: flex-start;
+            background: var(--accent);
+            color: #0b1a24;
+            font-weight: 800;
+            padding: 10px 22px;
+            border-radius: 999px;
+            position: relative;
+        }
+
+        /* フィルター */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 36px 0 16px;
+            flex-wrap: wrap;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            background: var(--panel);
+            color: var(--muted);
+            border: 1px solid var(--line);
+            padding: 7px 16px;
+            border-radius: 999px;
+            font: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .tab:hover { color: var(--text); }
+
+        .tab.active {
+            color: var(--text);
+            border-color: var(--accent);
+        }
+
+        .search {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            color: var(--text);
+            border-radius: 999px;
+            padding: 8px 16px;
+            font: inherit;
+            font-size: 0.9rem;
+            width: 220px;
+            outline: none;
+        }
+
+        .search:focus { border-color: var(--accent); }
+
+        /* ゲーム一覧 */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            gap: 16px;
+        }
+
+        .tile {
+            display: flex;
+            flex-direction: column;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            overflow: hidden;
+            color: var(--text);
+            text-decoration: none;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s, background 0.25s;
+        }
+
+        a.tile:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent);
+            background: var(--panel-hi);
+        }
+
+        a.tile:active { transform: scale(0.97); }
+
+        .thumb {
+            height: 130px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+
+        .tile-body {
+            padding: 14px 16px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+        }
+
+        .tile-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .tile-title {
+            font-weight: 800;
+            font-size: 1rem;
+            line-height: 1.3;
+        }
+
+        .tile-desc {
+            margin: 0;
+            font-size: 0.82rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        .status {
+            flex-shrink: 0;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 3px 9px;
+            border-radius: 999px;
+            color: #0e1116;
+        }
+
+        .status.live { background: var(--live); }
+        .status.wip { background: var(--wip); }
+        .status.local { background: var(--local); }
+
+        .tile.disabled { opacity: 0.6; cursor: default; }
+
+        .empty {
+            color: var(--muted);
+            text-align: center;
+            padding: 40px 0;
+            grid-column: 1 / -1;
+        }
+
+        /* ゲーム紹介（下部） */
+        .details {
+            margin-top: 48px;
+        }
+
+        .details h2 {
+            font-size: 1.3rem;
+            font-weight: 900;
+            margin: 0 0 16px;
+            letter-spacing: 1px;
+        }
+
+        .detail-card {
+            display: grid;
+            grid-template-columns: 56px 1fr;
+            gap: 16px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 14px;
+        }
+
+        .detail-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+
+        .detail-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 6px;
+        }
+
+        .detail-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+        }
+
+        .detail-text {
+            margin: 0 0 10px;
+            color: #c9d3e0;
+            line-height: 1.7;
+            font-size: 0.92rem;
+        }
+
+        .detail-link {
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-decoration: none;
+        }
+
+        .detail-link:hover { text-decoration: underline; }
+
+        footer {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--muted);
+            padding: 24px;
+            border-top: 1px solid var(--line);
+        }
+
+        @media (max-width: 600px) {
+            header { padding: 14px 16px; }
+            .stats { display: none; }
+            .hero { padding: 24px 20px; min-height: 180px; }
+            .hero-title { font-size: 1.5rem; }
+            .search { width: 100%; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">DAICHI-OTN<span> GAME HUB</span></div>
+        <div class="stats" id="stats"></div>
+    </header>
+
+    <main>
+        <!-- 注目のゲーム（公開中で url のあるものの先頭） -->
+        <a class="hero" id="hero" href="#"></a>
+
+        <div class="toolbar">
+            <div class="tabs" id="tabs"></div>
+            <input class="search" id="search" type="search" placeholder="ゲームを検索">
+        </div>
+
+        <div class="grid" id="grid"></div>
+
+        <section class="details">
+            <h2>ゲーム紹介</h2>
+            <div id="details"></div>
+        </section>
+    </main>
+
+    <footer>&copy; daichi</footer>
+
+    <script>
+        // 新しいゲームを作ったら、ここに 1 件追加するだけで一覧に載ります。
+        // status: "live" = 公開中 / "wip" = 開発中 / "local" = ミニ作品
+        // url が空の場合は「準備中」として表示され、クリックできません。
+        // icon は一覧のサムネイルに出す絵文字、color はサムネイルの背景色です。
+        const GAMES = [
+            {
+                title: "C-cim",
+                status: "live",
+                desc: "3D で描く街づくり経営シミュレーション。道路を引き、区画を塗って街を育てます。",
+                url: "https://daichi-otn.github.io/C-cim-game/",
+                icon: "🏙️",
+                detail: "本格的な街づくりを 3D で楽しめます。道路は 10 種類から直線・曲線で敷設でき、一方通行や橋・トンネルも使えます。道路沿いに住宅・商業・工業の区画を塗ると、需要に応じて建物が自動で建ちます。税収と維持費のバランスを取りながら予算を管理し、電力・水道・下水の施設を道路でつないで街へ供給します。工場や騒音による病気には、公園や防音壁で対処できます。",
+                color: "#1f4e79"
+            },
+            {
+                title: "Lap One",
+                status: "wip",
+                desc: "ブラウザで遊べる 3D レースゲーム。コインで車をカスタマイズし、天候の変わるコースで CPU と競います。",
+                url: "",
+                icon: "🏎️",
+                detail: "ブラウザで遊べる 3D レースです。初回レースは運営会社が支給する最低性能の車で参加費はかからず、2 戦目以降は参加費 1000 coin を払って出走します。優勝すると賞金 3000 × コース倍率、完走すると参加賞 500 coin、失格すると賞金はありません。コインで車をカスタマイズでき、天候の変わるコースで CPU と競います。スマートフォンやタブレットでも遊べます。",
+                color: "#7a3b10"
+            },
+            {
+                title: "ホリホリドリラー",
+                status: "wip",
+                desc: "地面を掘り進めるアクションのプロトタイプ。React と Phaser で作っています。",
+                url: "",
+                icon: "⛏️",
+                detail: "地面を掘り進めるアクションのプロトタイプです。掘削や部品に関わる仕組みを実装しながら、遊びの形を探っている開発中の作品です。React と Phaser で作られています。",
+                color: "#4a3a1a"
+            },
+            {
+                title: "ジオメトリ・ダッシュ：ネオン・リズム",
+                status: "local",
+                desc: "リズムに乗って進むアクションゲームです。",
+                url: "games/geometry.html",
+                icon: "🔷",
+                detail: "スペースやタップでジャンプして、トゲや箱を避けながらゴールを目指すリズムアクションです。全 3 レベルで、後のレベルほど速くなります。旗を置いて、その場所から練習できる練習モードもあります。",
+                color: "#3d1f6e"
+            },
+            {
+                title: "プログラム言語系クイズ",
+                status: "local",
+                desc: "HTML などの Web・プログラミングに関する 4 択クイズです。",
+                url: "games/quiz1.html",
+                icon: "💻",
+                detail: "HTML・Web・プログラミングの基礎に関する 4 択クイズです。全 75 問の問題プールから出題され、答えのあとに解説が出ます。",
+                color: "#1d4d3a"
+            },
+            {
+                title: "なぞなぞ系クイズ",
+                status: "local",
+                desc: "なぞなぞ・ひらめき・雑学の 4 択クイズです。",
+                url: "games/quiz2.html",
+                icon: "🧩",
+                detail: "なぞなぞ・言葉遊び、ひらめき、雑学の 4 択クイズです。全 75 問の問題プールから出題され、答えのあとに解説が出ます。",
+                color: "#5a2a4a"
+            }
+        ];
+
+        const STATUS_LABEL = { live: "公開中", wip: "準備中", local: "ミニ作品" };
+        const FILTERS = ["すべて", "公開中", "準備中", "ミニ作品"];
+
+        const state = { filter: "すべて", query: "" };
+
+        const $ = id => document.getElementById(id);
+
+        // url が空のものは、status に関係なく「準備中」として扱う
+        function statusKey(game) {
+            return game.url ? game.status : "wip";
+        }
+
+        function filterName(game) {
+            return STATUS_LABEL[statusKey(game)];
+        }
+
+        function renderHero() {
+            const game = GAMES.find(g => g.status === "live" && g.url);
+            const hero = $("hero");
+            if (!game) {
+                hero.style.display = "none";
+                return;
+            }
+            hero.href = game.url;
+            hero.innerHTML =
+                '<div class="hero-label">注目のゲーム</div>' +
+                '<h2 class="hero-title"></h2>' +
+                '<p class="hero-desc"></p>' +
+                '<span class="play">▶ 遊ぶ</span>';
+            hero.querySelector(".hero-title").textContent = game.title;
+            hero.querySelector(".hero-desc").textContent = game.desc;
+        }
+
+        function renderStats() {
+            const live = GAMES.filter(g => statusKey(g) === "live").length;
+            $("stats").textContent = "全 " + GAMES.length + " 作品 ・ 公開中 " + live;
+        }
+
+        function renderTabs() {
+            const tabs = $("tabs");
+            tabs.innerHTML = "";
+            FILTERS.forEach(name => {
+                const btn = document.createElement("button");
+                btn.className = "tab" + (state.filter === name ? " active" : "");
+                btn.textContent = name;
+                btn.addEventListener("click", () => {
+                    state.filter = name;
+                    renderTabs();
+                    renderGrid();
+                });
+                tabs.appendChild(btn);
+            });
+        }
+
+        function matches(game) {
+            const statusOk = state.filter === "すべて" || filterName(game) === state.filter;
+            const q = state.query.trim().toLowerCase();
+            const queryOk = !q || game.title.toLowerCase().includes(q) || game.desc.toLowerCase().includes(q);
+            return statusOk && queryOk;
+        }
+
+        function renderTile(game) {
+            const hasUrl = Boolean(game.url);
+            const el = document.createElement(hasUrl ? "a" : "div");
+            el.className = "tile" + (hasUrl ? "" : " disabled");
+            if (hasUrl) el.href = game.url;
+
+            const thumb = document.createElement("div");
+            thumb.className = "thumb";
+            thumb.style.background = "linear-gradient(135deg, " + game.color + ", #0e1116)";
+            thumb.textContent = game.icon;
+
+            const body = document.createElement("div");
+            body.className = "tile-body";
+
+            const head = document.createElement("div");
+            head.className = "tile-head";
+
+            const title = document.createElement("span");
+            title.className = "tile-title";
+            title.textContent = game.title;
+
+            const badge = document.createElement("span");
+            const key = statusKey(game);
+            badge.className = "status " + key;
+            badge.textContent = STATUS_LABEL[key];
+
+            const desc = document.createElement("p");
+            desc.className = "tile-desc";
+            desc.textContent = game.desc;
+
+            head.append(title, badge);
+            body.append(head, desc);
+            el.append(thumb, body);
+            return el;
+        }
+
+        function renderGrid() {
+            const grid = $("grid");
+            grid.innerHTML = "";
+            const list = GAMES.filter(matches);
+            if (list.length === 0) {
+                const empty = document.createElement("div");
+                empty.className = "empty";
+                empty.textContent = "該当するゲームがありません";
+                grid.appendChild(empty);
+                return;
+            }
+            list.forEach(game => grid.appendChild(renderTile(game)));
+        }
+
+        // 下部のゲーム紹介（GAMES の順番どおり）
+        function renderDetails() {
+            const box = $("details");
+            box.innerHTML = "";
+            GAMES.forEach(game => {
+                const card = document.createElement("div");
+                card.className = "detail-card";
+
+                const icon = document.createElement("div");
+                icon.className = "detail-icon";
+                icon.style.background = "linear-gradient(135deg, " + game.color + ", #0e1116)";
+                icon.textContent = game.icon;
+
+                const info = document.createElement("div");
+
+                const head = document.createElement("div");
+                head.className = "detail-head";
+                const title = document.createElement("span");
+                title.className = "detail-title";
+                title.textContent = game.title;
+                const badge = document.createElement("span");
+                const key = statusKey(game);
+                badge.className = "status " + key;
+                badge.textContent = STATUS_LABEL[key];
+                head.append(title, badge);
+
+                const text = document.createElement("p");
+                text.className = "detail-text";
+                text.textContent = game.detail;
+
+                info.append(head, text);
+
+                if (game.url) {
+                    const link = document.createElement("a");
+                    link.className = "detail-link";
+                    link.href = game.url;
+                    link.textContent = "遊ぶ →";
+                    info.appendChild(link);
+                }
+
+                card.append(icon, info);
+                box.appendChild(card);
+            });
+        }
+
+        $("search").addEventListener("input", e => {
+            state.query = e.target.value;
+            renderGrid();
+        });
+
+        // ページ移動時のフェードアウト
+        document.addEventListener("click", e => {
+            const link = e.target.closest("a.tile, a.hero");
+            if (!link || !link.getAttribute("href") || link.getAttribute("href") === "#") return;
+            e.preventDefault();
+            const target = link.getAttribute("href");
+            document.body.classList.add("fade-out");
+            setTimeout(() => { window.location.href = target; }, 400);
+        });
+
+        renderHero();
+        renderStats();
+        renderTabs();
+        renderGrid();
+        renderDetails();
+    </script>
+
+</body>
+</html>

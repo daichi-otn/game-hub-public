@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Webクイズゲーム</title>
+  <link rel="stylesheet" href="quiz.css">
+</head>
+<body>
+
+  <div class="quiz-container">
+    <!-- クイズ画面 -->
+    <div id="quiz-screen">
+      <div class="progress-bar-container">
+        <div id="progress-bar" class="progress-bar"></div>
+      </div>
+      <div id="question-count" class="question-count">読み込み中...</div>
+      <div id="question-text" class="question-text">クイズを読み込んでいます...</div>
+      
+      <div id="answers-grid" class="answers-grid">
+        <!-- JSでボタンが動的に生成されます -->
+      </div>
+
+      <div id="explanation-box" class="explanation-box"></div>
+
+      <button id="btn-next" class="btn-next" disabled>次の問題へ ➔</button>
+    </div>
+
+    <!-- 結果画面 -->
+    <div id="result-screen" class="result-screen">
+      <div class="result-title">結果発表</div>
+      <div id="rank-badge" class="rank-badge">S</div>
+      <div id="score-display" class="score-display">0 / 0 点</div>
+      <div id="result-comment" class="result-comment">メッセージ</div>
+      <button id="btn-restart" class="btn-restart">もう一度挑戦する</button>
+    </div>
+  </div>
+
+  <script src="quiz1.js" defer></script>
+
+    <!-- ハブに戻るボタン -->
+    <style>
+        .hub-back-btn {
+            position: fixed;
+            right: 14px;
+            bottom: 14px;
+            z-index: 9999;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(14, 17, 22, 0.85);
+            border: 1px solid #5ac8fa;
+            color: #5ac8fa;
+            font: 700 12px/1 system-ui, -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+            text-decoration: none;
+            box-shadow: 0 0 10px rgba(90, 200, 250, 0.35);
+            white-space: nowrap;
+        }
+        .hub-back-btn:hover { background: rgba(20, 40, 60, 0.9); }
+    </style>
+    <a class="hub-back-btn" href="../index.html">DAICHI-OTN GAME HUBに戻る</a>
+</body>
+</html>

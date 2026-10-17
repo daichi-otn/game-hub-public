@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ジオメトリ・ダッシュ：ネオン・リズム</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+1p:wght@400;700;900&family=Orbitron:wght@600;900&display=swap');
+
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'M PLUS 1p', 'Orbitron', sans-serif;
+            background-color: #030308;
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        .neon-glow-cyan {
+            box-shadow: 0 0 15px #00f3ff, inset 0 0 10px #00f3ff;
+            border: 2px solid #00f3ff;
+        }
+
+        .neon-text-cyan { text-shadow: 0 0 8px #00f3ff, 0 0 18px #00f3ff; }
+        .neon-text-pink { text-shadow: 0 0 8px #ff007f, 0 0 18px #ff007f; }
+
+        .glass-panel {
+            background: rgba(8, 12, 28, 0.94);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(0, 243, 255, 0.25);
+        }
+
+        .btn-gd {
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .btn-gd:hover {
+            transform: translateY(-2px) scale(1.03);
+            filter: brightness(1.25);
+        }
+
+        .btn-gd:active {
+            transform: translateY(1px) scale(0.97);
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.5); }
+        ::-webkit-scrollbar-thumb { background: #00f3ff; border-radius: 3px; }
+    </style>
+</head>
+<body class="w-screen h-screen flex items-center justify-center p-0 m-0 bg-slate-950 select-none">
+
+    <div id="game-frame" class="relative w-full h-full max-w-5xl max-h-[660px] md:rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(0,243,255,0.25)] border border-cyan-500/30 flex flex-col justify-center items-center">
+
+        <!-- ゲーム描画キャンバス -->
+        <canvas id="gameCanvas" class="w-full h-full block bg-black cursor-pointer"></canvas>
+
+        <!-- HUDレイヤー -->
+        <div id="hud-layer" class="absolute top-0 left-0 w-full h-full pointer-events-none p-4 flex flex-col justify-between hidden">
+            <div class="flex items-center justify-between w-full pointer-events-auto">
+                <div class="flex items-center gap-3">
+                    <button id="btn-pause" class="btn-gd w-10 h-10 rounded-xl bg-slate-900/80 border border-cyan-500/50 text-cyan-400 flex items-center justify-center hover:bg-cyan-950/50">
+                        <i class="fa-solid fa-pause text-lg"></i>
+                    </button>
+                    <div class="text-xs text-cyan-300 font-bold tracking-wider">
+                        挑戦回数 <span id="hud-attempts" class="text-white text-base ml-1">1</span>
+                    </div>
+                    <div id="hud-practice-badge" class="hidden px-2.5 py-1 bg-lime-500/20 border border-lime-400 text-lime-400 rounded-full text-xs font-bold animate-pulse">
+                        <i class="fa-solid fa-graduation-cap mr-1"></i> 練習モード
+                    </div>
+                </div>
+
+                <div class="flex-1 max-w-md mx-4 sm:mx-6">
+                    <div class="flex justify-between text-xs font-bold mb-1">
+                        <span id="hud-level-title" class="text-cyan-400 tracking-widest uppercase">ネオン・ビギニング</span>
+                        <span id="hud-progress-text" class="text-white">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-950/80 h-3 rounded-full border border-cyan-500/30 p-0.5 overflow-hidden">
+                        <div id="hud-progress-bar" class="bg-gradient-to-r from-cyan-400 via-pink-500 to-yellow-400 h-full rounded-full w-0% transition-all duration-100 shadow-[0_0_10px_#00f3ff]"></div>
+                    </div>
+                </div>
+
+                <button id="btn-audio-toggle" class="btn-gd w-10 h-10 rounded-xl bg-slate-900/80 border border-cyan-500/50 text-cyan-400 flex items-center justify-center hover:bg-cyan-950/50">
+                    <i id="audio-icon" class="fa-solid fa-volume-high"></i>
+                </button>
+            </div>
+
+            <div id="practice-controls" class="pointer-events-auto flex gap-3 mb-2 hidden">
+                <button id="btn-place-check" class="btn-gd px-3.5 py-2 rounded-xl bg-lime-500/80 hover:bg-lime-400 text-black font-bold text-xs flex items-center gap-1.5 shadow-[0_0_12px_rgba(132,204,22,0.5)]">
+                    <i class="fa-solid fa-flag"></i> 旗を置く [Z]
+                </button>
+                <button id="btn-remove-check" class="btn-gd px-3.5 py-2 rounded-xl bg-red-500/80 hover:bg-red-400 text-white font-bold text-xs flex items-center gap-1.5 shadow-[0_0_12px_rgba(239,68,68,0.5)]">
+                    <i class="fa-solid fa-trash"></i> 旗を消す [X]
+                </button>
+            </div>
+        </div>
+
+        <!-- スタート画面 -->
+        <div id="screen-start" class="absolute inset-0 glass-panel flex flex-col items-center justify-between p-6 z-20">
+            <div class="flex justify-between w-full max-w-xl items-center">
+                <div class="flex items-center gap-4 text-xs font-bold">
+                    <div class="flex items-center gap-1.5 text-yellow-400 bg-slate-900/80 px-3 py-1.5 rounded-full border border-yellow-500/30">
+                        <i class="fa-solid fa-star"></i> <span id="shop-stars-display">0</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-cyan-400 bg-slate-900/80 px-3 py-1.5 rounded-full border border-cyan-500/30">
+                        <i class="fa-solid fa-gem"></i> <span id="shop-orbs-display">0</span>
+                    </div>
+                </div>
+                <div class="text-xs font-bold text-slate-400">Ver 3.0 JP</div>
+            </div>
+
+            <div class="text-center">
+                <div class="text-xs tracking-[0.4em] text-pink-500 font-bold mb-1 uppercase animate-pulse">GEOMETRY RHYTHM ACTION</div>
+                <h1 class="text-3xl sm:text-5xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-500 to-yellow-400 neon-text-cyan">
+                    ジオメトリ・ダッシュ
+                </h1>
+                <div class="text-sm font-extrabold text-cyan-300 tracking-widest mt-1">ネオン・リズム</div>
+            </div>
+
+            <div class="w-full max-w-xl flex flex-col items-center my-auto">
+                <div class="flex items-center justify-between w-full mb-3">
+                    <button id="btn-prev-level" class="btn-gd w-11 h-11 rounded-2xl bg-slate-900 border border-cyan-500/50 text-cyan-400 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <div id="level-card" class="flex-1 mx-3 sm:mx-4 p-4 sm:p-5 rounded-2xl bg-slate-900/90 border border-cyan-400/40 text-center flex flex-col items-center shadow-lg">
+                        <div id="card-level-num" class="text-xs font-bold text-pink-400 tracking-widest mb-1">レベル 1</div>
+                        <div id="card-level-name" class="text-2xl font-black text-white mb-2 neon-text-cyan">ネオン・ビギニング</div>
+                        <div id="card-level-diff" class="text-xs font-semibold px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 mb-3">
+                            初級 • ★3
+                        </div>
+                        <div class="w-full bg-slate-950 rounded-full h-2.5 overflow-hidden border border-slate-800">
+                            <div id="card-level-best" class="bg-gradient-to-r from-cyan-400 to-pink-500 h-full w-0%"></div>
+                        </div>
+                        <div id="card-level-best-text" class="text-[11px] text-slate-400 mt-1">最高記録: 0%</div>
+                    </div>
+                    <button id="btn-next-level" class="btn-gd w-11 h-11 rounded-2xl bg-slate-900 border border-cyan-500/50 text-cyan-400 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <div class="flex gap-4 w-full max-w-md">
+                    <button id="btn-play-normal" class="btn-gd flex-1 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-black font-black text-base rounded-xl shadow-[0_0_20px_rgba(0,243,255,0.5)] flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-play"></i> スタート
+                    </button>
+                    <button id="btn-play-practice" class="btn-gd flex-1 py-3.5 bg-slate-800 border border-lime-400/60 text-lime-400 font-bold text-base rounded-xl hover:bg-slate-700 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-graduation-cap"></i> 練習モード
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex gap-4 w-full max-w-md">
+                <button id="btn-open-shop" class="btn-gd flex-1 py-3 bg-slate-900/90 border border-pink-500/50 text-pink-400 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-store"></i> ショップ
+                </button>
+                <button id="btn-open-editor" class="btn-gd flex-1 py-3 bg-slate-900/90 border border-yellow-500/50 text-yellow-400 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-cubes"></i> エディター
+                </button>
+            </div>
+        </div>
+
+        <!-- ショップ画面 -->
+        <div id="screen-shop" class="absolute inset-0 glass-panel flex flex-col items-center justify-between p-6 z-30 hidden overflow-y-auto">
+            <div class="flex justify-between items-center w-full max-w-md border-b border-cyan-500/30 pb-3">
+                <h2 class="text-xl font-black text-pink-400 tracking-wider">ネオン・ショップ</h2>
+                <button id="btn-close-shop" class="btn-gd w-8 h-8 rounded-lg bg-slate-800 text-slate-300 flex items-center justify-center hover:bg-slate-700">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="my-4 flex flex-col items-center">
+                <canvas id="shopPreviewCanvas" width="100" height="100" class="rounded-xl border border-cyan-500/40 bg-slate-950 shadow-inner"></canvas>
+                <span class="text-xs text-cyan-300 font-bold mt-2">スキンプレビュー</span>
+            </div>
+
+            <div class="w-full max-w-md space-y-4 text-xs font-bold">
+                <div>
+                    <div class="text-slate-300 mb-2 text-center">メインカラー</div>
+                    <div id="palette-primary" class="flex gap-3 justify-center"></div>
+                </div>
+                <div>
+                    <div class="text-slate-300 mb-2 text-center">サブ・グローカラー</div>
+                    <div id="palette-secondary" class="flex gap-3 justify-center"></div>
+                </div>
+            </div>
+
+            <div class="w-full max-w-md pt-4">
+                <button id="btn-shop-back" class="btn-gd w-full py-2.5 bg-slate-800 border border-slate-600 text-slate-200 font-bold text-xs rounded-xl">
+                    閉じる
+                </button>
+            </div>
+        </div>
+
+        <!-- 一時停止画面 -->
+        <div id="screen-pause" class="absolute inset-0 glass-panel flex flex-col items-center justify-center p-6 z-30 hidden">
+            <h2 class="text-3xl font-black text-cyan-400 mb-6">一時停止</h2>
+            <div class="flex flex-col gap-3 w-full max-w-xs">
+                <button id="btn-resume" class="btn-gd py-3 bg-cyan-500 text-black font-black rounded-xl">再開</button>
+                <button id="btn-restart" class="btn-gd py-3 bg-slate-800 border border-cyan-500/50 text-cyan-300 font-bold rounded-xl">最初から</button>
+                <button id="btn-quit" class="btn-gd py-3 bg-red-950/80 border border-red-500/50 text-red-300 font-bold rounded-xl">メインメニューへ</button>
+            </div>
+        </div>
+
+        <!-- クリア画面 -->
+        <div id="screen-clear" class="absolute inset-0 glass-panel flex flex-col items-center justify-center p-6 z-30 hidden text-center">
+            <h2 class="text-4xl font-black text-yellow-400 neon-text-pink mb-2">ステージクリア！</h2>
+            <p id="clear-level-name" class="text-lg text-cyan-300 font-bold mb-6">ネオン・ビギニング</p>
+            <div class="flex justify-center gap-6 mb-8 text-2xl font-bold">
+                <span class="text-yellow-400"><i class="fa-solid fa-star mr-1"></i>+3</span>
+                <span class="text-cyan-400"><i class="fa-solid fa-gem mr-1"></i>+10</span>
+            </div>
+            <button id="btn-clear-ok" class="btn-gd px-8 py-3 bg-gradient-to-r from-cyan-400 to-pink-500 text-black font-black rounded-xl text-lg shadow-[0_0_20px_rgba(0,243,255,0.5)]">
+                OK
+            </button>
+        </div>
+
+        <!-- エディター操作バー -->
+        <div id="editor-toolbar" class="absolute top-3 left-3 right-3 glass-panel p-2.5 rounded-xl z-20 flex flex-wrap gap-2 justify-between items-center hidden">
+            <div class="flex items-center gap-2">
+                <button id="btn-editor-exit" class="btn-gd px-3 py-1.5 bg-slate-800 border border-slate-600 text-xs font-bold text-slate-200 rounded-lg flex items-center gap-1">
+                    <i class="fa-solid fa-arrow-left"></i> 戻る
+                </button>
+                <button id="btn-editor-clear" class="btn-gd px-3 py-1.5 bg-red-900/60 border border-red-500/50 text-xs font-bold text-red-300 rounded-lg">
+                    全削除
+                </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button id="btn-editor-scroll-left" class="btn-gd w-8 h-8 bg-slate-800 border border-cyan-500/40 text-cyan-300 rounded-lg font-bold">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <span class="text-xs font-bold text-cyan-300">スクロール</span>
+                <button id="btn-editor-scroll-right" class="btn-gd w-8 h-8 bg-slate-800 border border-cyan-500/40 text-cyan-300 rounded-lg font-bold">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <button id="btn-editor-test" class="btn-gd px-4 py-1.5 bg-gradient-to-r from-lime-400 to-emerald-500 text-black text-xs font-black rounded-lg flex items-center gap-1 shadow-[0_0_10px_rgba(132,204,22,0.5)]">
+                <i class="fa-solid fa-play"></i> テスト
+            </button>
+        </div>
+
+        <!-- エディターパレット (画面上部) -->
+        <div id="editor-palette" class="absolute top-16 left-3 right-3 glass-panel p-2 rounded-xl z-20 flex gap-2 overflow-x-auto hidden">
+            <!-- JSで動的生成 -->
+        </div>
+    </div>
+
+    <script>
+        // サウンドエンジン
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+            playJump() {
+                if (this.muted || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(400, this.ctx.currentTime + 0.12);
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.12);
+            }
+            playOrb() {
+                if (this.muted || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.15);
+            }
+            playExplode() {
+                if (this.muted || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(120, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.2);
+            }
+        }
+
+        const sound = new SoundEngine();
+
+        // 定数＆初期ステート
+        const CANVAS_WIDTH = 900;
+        const CANVAS_HEIGHT = 500;
+        const GROUND_Y = 400;
+        const GRID_SIZE = 40;
+        const FIXED_TIMESTEP = 1000 / 60; // 60FPS固定物理計算
+
+        let canvas = document.getElementById('gameCanvas');
+        let ctx = canvas.getContext('2d');
+        canvas.width = CANVAS_WIDTH;
+        canvas.height = CANVAS_HEIGHT;
+
+        let gameState = 'start'; // start, playing, paused, clear, editor
+        let isPractice = false;
+        let currentLevelIdx = 0;
+        let attempts = 1;
+        let cameraX = 0;
+        let editorScrollX = 0;
+        let selectedEditorItem = 'block';
+
+        let stars = 0;
+        let orbs = 0;
+        let primaryColor = '#00f3ff';
+        let secondaryColor = '#ff007f';
+
+        // プレイヤーオブジェクト
+        let player = {
+            x: 100,
+            y: GROUND_Y - 38,
+            w: 38,
+            h: 38,
+            vy: 0,
+            rotation: 0,
+            isGrounded: true,
+            mode: 'cube', // cube, ship
+            gravity: 1, // 1: 通常, -1: 反転
+            checkpoints: []
+        };
+
+        // レベル定義
+        const levels = [
+            {
+                name: 'ネオン・ビギニング',
+                diff: '初級 • ★3',
+                length: 2400,
+                speed: 6.5,
+                objects: [
+                    { type: 'spike', x: 500, y: GROUND_Y - 40 },
+                    { type: 'block', x: 700, y: GROUND_Y - 40 },
+                    { type: 'spike', x: 700, y: GROUND_Y - 80 },
+                    { type: 'spike', x: 950, y: GROUND_Y - 40 },
+                    { type: 'spike', x: 990, y: GROUND_Y - 40 },
+                    { type: 'orb_yellow', x: 1200, y: GROUND_Y - 100 },
+                    { type: 'spike', x: 1200, y: GROUND_Y - 40 },
+                    { type: 'spike', x: 1240, y: GROUND_Y - 40 },
+                    { type: 'block', x: 1400, y: GROUND_Y - 40 },
+                    { type: 'block', x: 1440, y: GROUND_Y - 80 },
+                    { type: 'saw', x: 1700, y: GROUND_Y - 60 },
+                    { type: 'goal', x: 2200, y: GROUND_Y - 120 }
+                ]
+            },
+            {
+                name: 'サイバー・ステップ',
+                diff: '中級 • ★5',
+                length: 2800,
+                speed: 7.2,
+                objects: [
+                    { type: 'spike', x: 400, y: GROUND_Y - 40 },
+                    { type: 'saw', x: 600, y: GROUND_Y - 50 },
+                    { type: 'pad_yellow', x: 850, y: GROUND_Y - 15 },
+                    { type: 'block', x: 1000, y: GROUND_Y - 120 },
+                    { type: 'spike', x: 1000, y: GROUND_Y - 160 },
+                    { type: 'portal_ship', x: 1300, y: GROUND_Y - 100 },
+                    { type: 'saw', x: 1600, y: GROUND_Y - 100 },
+                    { type: 'saw', x: 1800, y: GROUND_Y - 200 },
+                    { type: 'portal_cube', x: 2100, y: GROUND_Y - 100 },
+                    { type: 'goal', x: 2600, y: GROUND_Y - 120 }
+                ]
+            },
+            {
+                name: 'グラビティ・カオス',
+                diff: '上級 • ★8',
+                length: 3200,
+                speed: 8.0,
+                objects: [
+                    { type: 'spike', x: 450, y: GROUND_Y - 40 },
+                    { type: 'portal_gravity', x: 650, y: GROUND_Y - 100 },
+                    { type: 'spike', x: 850, y: 40 },
+                    { type: 'portal_gravity', x: 1100, y: GROUND_Y - 100 },
+                    { type: 'portal_ship', x: 1400, y: GROUND_Y - 100 },
+                    { type: 'saw', x: 1700, y: GROUND_Y - 150 },
+                    { type: 'saw', x: 2000, y: GROUND_Y - 80 },
+                    { type: 'saw', x: 2300, y: GROUND_Y - 220 },
+                    { type: 'portal_cube', x: 2600, y: GROUND_Y - 100 },
+                    { type: 'goal', x: 3000, y: GROUND_Y - 120 }
+                ]
+            }
+        ];
+
+        let customLevel = {
+            name: 'カスタム・ステージ',
+            diff: '自作 • ★?',
+            length: 2500,
+            speed: 6.8,
+            objects: []
+        };
+
+        let editorItems = [
+            { id: 'block', name: 'ブロック', icon: 'fa-cube', color: '#00f3ff' },
+            { id: 'spike', name: 'トゲ', icon: 'fa-play', color: '#ff007f' },
+            { id: 'saw', name: 'ノコギリ', icon: 'fa-compact-disc', color: '#ffe600' },
+            { id: 'pad_yellow', name: 'ジャンプパッド', icon: 'fa-angles-up', color: '#ffe600' },
+            { id: 'orb_yellow', name: 'ジャンプオーブ', icon: 'fa-circle-dot', color: '#ffe600' },
+            { id: 'portal_ship', name: 'シップポータル', icon: 'fa-plane', color: '#00f3ff' },
+            { id: 'portal_cube', name: 'キューブポータル', icon: 'fa-square', color: '#a855f7' },
+            { id: 'portal_gravity', name: '重力ポータル', icon: 'fa-arrows-up-down', color: '#22c55e' },
+            { id: 'goal', name: 'ゴール', icon: 'fa-flag-checkered', color: '#ffffff' },
+            { id: 'eraser', name: '消しゴム', icon: 'fa-eraser', color: '#ef4444' }
+        ];
+
+        // 各UI要素の参照
+        const ui = {
+            startScreen: document.getElementById('screen-start'),
+            shopScreen: document.getElementById('screen-shop'),
+            pauseScreen: document.getElementById('screen-pause'),
+            clearScreen: document.getElementById('screen-clear'),
+            hudLayer: document.getElementById('hud-layer'),
+            editorToolbar: document.getElementById('editor-toolbar'),
+            editorPalette: document.getElementById('editor-palette'),
+            practiceControls: document.getElementById('practice-controls'),
+            practiceBadge: document.getElementById('hud-practice-badge'),
+            levelNum: document.getElementById('card-level-num'),
+            levelName: document.getElementById('card-level-name'),
+            levelDiff: document.getElementById('card-level-diff'),
+            levelBestBar: document.getElementById('card-level-best'),
+            levelBestText: document.getElementById('card-level-best-text'),
+            hudTitle: document.getElementById('hud-level-title'),
+            hudProgressText: document.getElementById('hud-progress-text'),
+            hudProgressBar: document.getElementById('hud-progress-bar'),
+            hudAttempts: document.getElementById('hud-attempts'),
+            starsDisplay: document.getElementById('shop-stars-display'),
+            orbsDisplay: document.getElementById('shop-orbs-display')
+        };
+
+        function getCurrentLevel() {
+            if (gameState === 'editor' || currentLevelIdx === 3) {
+                return customLevel;
+            }
+            return levels[currentLevelIdx];
+        }
+
+        function setupEventListeners() {
+            // メイン画面のボタン
+            document.getElementById('btn-prev-level').onclick = () => {
+                currentLevelIdx = (currentLevelIdx - 1 + 4) % 4;
+                updateLevelCard();
+            };
+            document.getElementById('btn-next-level').onclick = () => {
+                currentLevelIdx = (currentLevelIdx + 1) % 4;
+                updateLevelCard();
+            };
+            document.getElementById('btn-play-normal').onclick = () => {
+                sound.init();
+                isPractice = false;
+                startPlay();
+            };
+            document.getElementById('btn-play-practice').onclick = () => {
+                sound.init();
+                isPractice = true;
+                startPlay();
+            };
+            document.getElementById('btn-open-shop').onclick = () => {
+                ui.startScreen.classList.add('hidden');
+                ui.shopScreen.classList.remove('hidden');
+                drawShopPreview();
+            };
+            document.getElementById('btn-close-shop').onclick = () => {
+                ui.shopScreen.classList.add('hidden');
+                ui.startScreen.classList.remove('hidden');
+            };
+            document.getElementById('btn-shop-back').onclick = () => {
+                ui.shopScreen.classList.add('hidden');
+                ui.startScreen.classList.remove('hidden');
+            };
+            document.getElementById('btn-open-editor').onclick = () => {
+                sound.init();
+                gameState = 'editor';
+                ui.startScreen.classList.add('hidden');
+                ui.editorToolbar.classList.remove('hidden');
+                ui.editorPalette.classList.remove('hidden');
+                initEditorPalette();
+            };
+
+            // HUD / 一時停止
+            document.getElementById('btn-pause').onclick = () => {
+                if (gameState === 'playing') {
+                    gameState = 'paused';
+                    ui.pauseScreen.classList.remove('hidden');
+                }
+            };
+            document.getElementById('btn-resume').onclick = () => {
+                gameState = 'playing';
+                ui.pauseScreen.classList.add('hidden');
+            };
+            document.getElementById('btn-restart').onclick = () => {
+                ui.pauseScreen.classList.add('hidden');
+                resetPlayer();
+                gameState = 'playing';
+            };
+            document.getElementById('btn-quit').onclick = () => {
+                ui.pauseScreen.classList.add('hidden');
+                ui.hudLayer.classList.add('hidden');
+                ui.startScreen.classList.remove('hidden');
+                gameState = 'start';
+            };
+
+            // クリア画面
+            document.getElementById('btn-clear-ok').onclick = () => {
+                ui.clearScreen.classList.add('hidden');
+                ui.hudLayer.classList.add('hidden');
+                ui.startScreen.classList.remove('hidden');
+                gameState = 'start';
+            };
+
+            // 練習モードのチェックポイント
+            document.getElementById('btn-place-check').onclick = () => {
+                if (gameState === 'playing' && isPractice) {
+                    player.checkpoints.push({ ...player });
+                }
+            };
+            document.getElementById('btn-remove-check').onclick = () => {
+                if (gameState === 'playing' && isPractice && player.checkpoints.length > 0) {
+                    player.checkpoints.pop();
+                }
+            };
+
+            // エディター操作ボタン
+            document.getElementById('btn-editor-exit').onclick = () => {
+                ui.editorToolbar.classList.add('hidden');
+                ui.editorPalette.classList.add('hidden');
+                ui.startScreen.classList.remove('hidden');
+                gameState = 'start';
+            };
+            document.getElementById('btn-editor-clear').onclick = () => {
+                customLevel.objects = [];
+            };
+            document.getElementById('btn-editor-scroll-left').onclick = () => {
+                editorScrollX = Math.max(0, editorScrollX - 200);
+            };
+            document.getElementById('btn-editor-scroll-right').onclick = () => {
+                editorScrollX += 200;
+            };
+            document.getElementById('btn-editor-test').onclick = () => {
+                currentLevelIdx = 3;
+                isPractice = false;
+                ui.editorToolbar.classList.add('hidden');
+                ui.editorPalette.classList.add('hidden');
+                startPlay();
+            };
+
+            // ミュートボタン
+            document.getElementById('btn-audio-toggle').onclick = () => {
+                sound.muted = !sound.muted;
+                document.getElementById('audio-icon').className = sound.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+            };
+
+            // タップ・キー入力のレスポンス
+            window.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' || e.code === 'ArrowUp') {
+                    handleJumpInput(true);
+                }
+                if (e.code === 'KeyZ') document.getElementById('btn-place-check').click();
+                if (e.code === 'KeyX') document.getElementById('btn-remove-check').click();
+            });
+            window.addEventListener('keyup', (e) => {
+                if (e.code === 'Space' || e.code === 'ArrowUp') {
+                    handleJumpInput(false);
+                }
+            });
+
+            canvas.addEventListener('mousedown', (e) => {
+                sound.init();
+                if (gameState === 'editor') {
+                    handleEditorClick(e);
+                } else if (gameState === 'playing') {
+                    handleJumpInput(true);
+                }
+            });
+            canvas.addEventListener('mouseup', () => handleJumpInput(false));
+
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                sound.init();
+                if (gameState === 'editor') {
+                    const touch = e.touches[0];
+                    handleEditorClick(touch);
+                } else if (gameState === 'playing') {
+                    handleJumpInput(true);
+                }
+            }, { passive: false });
+
+            canvas.addEventListener('touchend', () => handleJumpInput(false));
+        }
+
+        let isHoldingJump = false;
+
+        function handleJumpInput(isDown) {
+            isHoldingJump = isDown;
+            if (isDown && gameState === 'playing') {
+                triggerJump();
+            }
+        }
+
+        function triggerJump() {
+            if (player.mode === 'cube' && player.isGrounded) {
+                player.vy = -12 * player.gravity;
+                player.isGrounded = false;
+                sound.playJump();
+            }
+            // オーブ判定
+            const curLevel = getCurrentLevel();
+            for (let obj of curLevel.objects) {
+                if (obj.type.startsWith('orb_')) {
+                    const dx = (player.x + player.w / 2) - (obj.x + 20);
+                    const dy = (player.y + player.h / 2) - (obj.y + 20);
+                    if (Math.sqrt(dx * dx + dy * dy) < 45) {
+                        player.vy = -13 * player.gravity;
+                        sound.playOrb();
+                        break;
+                    }
+                }
+            }
+        }
+
+        function updateLevelCard() {
+            if (currentLevelIdx === 3) {
+                ui.levelNum.textContent = 'カスタム';
+                ui.levelName.textContent = customLevel.name;
+                ui.levelDiff.textContent = customLevel.diff;
+            } else {
+                const lvl = levels[currentLevelIdx];
+                ui.levelNum.textContent = `レベル ${currentLevelIdx + 1}`;
+                ui.levelName.textContent = lvl.name;
+                ui.levelDiff.textContent = lvl.diff;
+            }
+            ui.levelBestBar.style.width = '0%';
+            ui.levelBestText.textContent = '最高記録: 0%';
+        }
+
+        function initEditorPalette() {
+            ui.editorPalette.innerHTML = '';
+            editorItems.forEach(item => {
+                const btn = document.createElement('button');
+                btn.className = `btn-gd flex-shrink-0 px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1.5 ${selectedEditorItem === item.id ? 'bg-cyan-950 border-cyan-400 text-cyan-300' : 'bg-slate-900 border-slate-700 text-slate-400'}`;
+                btn.innerHTML = `<i class="fa-solid ${item.icon}" style="color:${item.color}"></i> ${item.name}`;
+                btn.onclick = () => {
+                    selectedEditorItem = item.id;
+                    initEditorPalette();
+                };
+                ui.editorPalette.appendChild(btn);
+            });
+        }
+
+        function handleEditorClick(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = (e.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
+            const clickY = (e.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
+
+            const gridX = Math.floor((clickX + editorScrollX) / GRID_SIZE) * GRID_SIZE;
+            const gridY = Math.floor(clickY / GRID_SIZE) * GRID_SIZE;
+
+            if (selectedEditorItem === 'eraser') {
+                customLevel.objects = customLevel.objects.filter(obj => !(obj.x === gridX && obj.y === gridY));
+            } else {
+                customLevel.objects = customLevel.objects.filter(obj => !(obj.x === gridX && obj.y === gridY));
+                customLevel.objects.push({ type: selectedEditorItem, x: gridX, y: gridY });
+            }
+        }
+
+        function startPlay() {
+            attempts = 1;
+            resetPlayer();
+            gameState = 'playing';
+
+            ui.startScreen.classList.add('hidden');
+            ui.hudLayer.classList.remove('hidden');
+
+            const lvl = getCurrentLevel();
+            ui.hudTitle.textContent = lvl.name;
+            ui.hudAttempts.textContent = attempts;
+
+            if (isPractice) {
+                ui.practiceControls.classList.remove('hidden');
+                ui.practiceBadge.classList.remove('hidden');
+            } else {
+                ui.practiceControls.classList.add('hidden');
+                ui.practiceBadge.classList.add('hidden');
+            }
+        }
+
+        function resetPlayer() {
+            player.x = 100;
+            player.y = GROUND_Y - 38;
+            player.w = 38;
+            player.h = 38;
+            player.vy = 0;
+            player.rotation = 0;
+            player.isGrounded = true;
+            player.mode = 'cube';
+            player.gravity = 1;
+            cameraX = 0;
+
+            if (isPractice && player.checkpoints.length > 0) {
+                const cp = player.checkpoints[player.checkpoints.length - 1];
+                Object.assign(player, cp);
+                cameraX = player.x - 100;
+            }
+        }
+
+        let lastTime = performance.now();
+        let accumulator = 0;
+
+        function updatePhysics() {
+            if (gameState !== 'playing') return;
+
+            const curLevel = getCurrentLevel();
+
+            // 前進移動
+            player.x += curLevel.speed;
+            cameraX = player.x - 100;
+
+            // シップモードの操作
+            if (player.mode === 'ship') {
+                if (isHoldingJump) player.vy -= 0.6 * player.gravity;
+                else player.vy += 0.5 * player.gravity;
+                player.vy = Math.max(-8, Math.min(8, player.vy));
+                player.rotation = player.vy * 0.05;
+            } else {
+                // キューブモードの重力処理
+                player.vy += 0.7 * player.gravity;
+                if (!player.isGrounded) {
+                    player.rotation += 0.15 * player.gravity;
+                } else {
+                    player.rotation = Math.round(player.rotation / (Math.PI / 2)) * (Math.PI / 2);
+                }
+            }
+
+            player.y += player.vy;
+
+            // 地面衝突
+            if (player.gravity === 1 && player.y >= GROUND_Y - player.h) {
+                player.y = GROUND_Y - player.h;
+                player.vy = 0;
+                player.isGrounded = true;
+            } else if (player.gravity === -1 && player.y <= 0) {
+                player.y = 0;
+                player.vy = 0;
+                player.isGrounded = true;
+            } else {
+                player.isGrounded = false;
+            }
+
+            // オブジェクトとの当たり判定（インセット本家仕様）
+            for (let obj of curLevel.objects) {
+                // トゲ
+                if (obj.type === 'spike') {
+                    if (checkHitbox(player, { x: obj.x + 8, y: obj.y + 12, w: 24, h: 26 })) {
+                        handleDeath();
+                        return;
+                    }
+                }
+                // ノコギリ
+                else if (obj.type === 'saw') {
+                    const dx = (player.x + player.w / 2) - (obj.x + 20);
+                    const dy = (player.y + player.h / 2) - (obj.y + 20);
+                    if (Math.sqrt(dx * dx + dy * dy) < 18) {
+                        handleDeath();
+                        return;
+                    }
+                }
+                // ブロック
+                else if (obj.type === 'block') {
+                    if (checkHitbox(player, { x: obj.x, y: obj.y, w: 40, h: 40 })) {
+                        // 上に着地
+                        if (player.vy > 0 && player.y + player.h - player.vy <= obj.y + 10) {
+                            player.y = obj.y - player.h;
+                            player.vy = 0;
+                            player.isGrounded = true;
+                        } else {
+                            handleDeath();
+                            return;
+                        }
+                    }
+                }
+                // ジャンプパッド
+                else if (obj.type === 'pad_yellow') {
+                    if (checkHitbox(player, { x: obj.x, y: obj.y + 20, w: 40, h: 20 })) {
+                        player.vy = -16 * player.gravity;
+                        sound.playOrb();
+                    }
+                }
+                // ポータル類
+                else if (obj.type === 'portal_ship') {
+                    if (checkHitbox(player, { x: obj.x, y: obj.y, w: 40, h: 60 })) player.mode = 'ship';
+                } else if (obj.type === 'portal_cube') {
+                    if (checkHitbox(player, { x: obj.x, y: obj.y, w: 40, h: 60 })) player.mode = 'cube';
+                } else if (obj.type === 'portal_gravity') {
+                    if (checkHitbox(player, { x: obj.x, y: obj.y, w: 40, h: 60 })) player.gravity *= -1;
+                }
+                // ゴール
+                else if (obj.type === 'goal') {
+                    if (checkHitbox(player, { x: obj.x, y: obj.y, w: 40, h: 80 })) {
+                        triggerVictory();
+                        return;
+                    }
+                }
+            }
+
+            // HUD更新
+            const progress = Math.min(100, Math.floor((player.x / curLevel.length) * 100));
+            ui.hudProgressText.textContent = `${progress}%`;
+            ui.hudProgressBar.style.width = `${progress}%`;
+        }
+
+        function checkHitbox(r1, r2) {
+            return !(r1.x + r1.w < r2.x || r1.x > r2.x + r2.w || r1.y + r1.h < r2.y || r1.y > r2.y + r2.h);
+        }
+
+        function handleDeath() {
+            sound.playExplode();
+            attempts++;
+            ui.hudAttempts.textContent = attempts;
+            resetPlayer();
+        }
+
+        function triggerVictory() {
+            gameState = 'clear';
+            stars += 3;
+            orbs += 10;
+            ui.starsDisplay.textContent = stars;
+            ui.orbsDisplay.textContent = orbs;
+
+            document.getElementById('clear-level-name').textContent = getCurrentLevel().name;
+            ui.clearScreen.classList.remove('hidden');
+        }
+
+        function render() {
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+            if (gameState === 'editor') {
+                drawEditorGrid();
+                drawObjects(editorScrollX);
+            } else if (gameState === 'playing' || gameState === 'paused') {
+                drawBackground();
+                drawObjects(cameraX);
+                drawPlayer();
+            } else {
+                drawBackground();
+            }
+        }
+
+        function drawBackground() {
+            // 背景グリッド
+            ctx.strokeStyle = 'rgba(0, 243, 255, 0.08)';
+            ctx.lineWidth = 1;
+            for (let x = - (cameraX % 40); x < CANVAS_WIDTH; x += 40) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, CANVAS_HEIGHT);
+                ctx.stroke();
+            }
+            // 地面
+            ctx.fillStyle = '#080c1c';
+            ctx.fillRect(0, GROUND_Y, CANVAS_WIDTH, CANVAS_HEIGHT - GROUND_Y);
+            ctx.strokeStyle = '#00f3ff';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(0, GROUND_Y);
+            ctx.lineTo(CANVAS_WIDTH, GROUND_Y);
+            ctx.stroke();
+        }
+
+        function drawEditorGrid() {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.lineWidth = 1;
+            for (let x = - (editorScrollX % GRID_SIZE); x < CANVAS_WIDTH; x += GRID_SIZE) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, CANVAS_HEIGHT);
+                ctx.stroke();
+            }
+            for (let y = 0; y < CANVAS_HEIGHT; y += GRID_SIZE) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(CANVAS_WIDTH, y);
+                ctx.stroke();
+            }
+            // 地面線
+            ctx.strokeStyle = '#ff007f';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, GROUND_Y);
+            ctx.lineTo(CANVAS_WIDTH, GROUND_Y);
+            ctx.stroke();
+        }
+
+        function drawObjects(offsetX) {
+            const curLevel = getCurrentLevel();
+            for (let obj of curLevel.objects) {
+                const drawX = obj.x - offsetX;
+                if (drawX < -50 || drawX > CANVAS_WIDTH + 50) continue;
+
+                if (obj.type === 'block') {
+                    ctx.fillStyle = '#0f172a';
+                    ctx.fillRect(drawX, obj.y, 40, 40);
+                    ctx.strokeStyle = '#00f3ff';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(drawX, obj.y, 40, 40);
+                } else if (obj.type === 'spike') {
+                    ctx.fillStyle = '#ff007f';
+                    ctx.beginPath();
+                    ctx.moveTo(drawX + 20, obj.y);
+                    ctx.lineTo(drawX + 40, obj.y + 40);
+                    ctx.lineTo(drawX, obj.y + 40);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (obj.type === 'saw') {
+                    ctx.save();
+                    ctx.translate(drawX + 20, obj.y + 20);
+                    ctx.rotate(Date.now() * 0.005);
+                    ctx.strokeStyle = '#ffe600';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 18, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.restore();
+                } else if (obj.type.startsWith('pad_') || obj.type.startsWith('orb_')) {
+                    ctx.fillStyle = '#ffe600';
+                    ctx.beginPath();
+                    ctx.arc(drawX + 20, obj.y + 20, 12, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (obj.type.startsWith('portal_')) {
+                    ctx.strokeStyle = '#a855f7';
+                    ctx.lineWidth = 4;
+                    ctx.strokeRect(drawX + 5, obj.y, 30, 60);
+                } else if (obj.type === 'goal') {
+                    ctx.fillStyle = '#22c55e';
+                    ctx.fillRect(drawX + 10, obj.y, 20, 80);
+                }
+            }
+        }
+
+        function drawPlayer() {
+            ctx.save();
+            ctx.translate(player.x - cameraX + player.w / 2, player.y + player.h / 2);
+            ctx.rotate(player.rotation);
+
+            // キューブ描画
+            ctx.fillStyle = primaryColor;
+            ctx.fillRect(-player.w / 2, -player.h / 2, player.w, player.h);
+            ctx.strokeStyle = secondaryColor;
+            ctx.lineWidth = 3;
+            ctx.strokeRect(-player.w / 2, -player.h / 2, player.w, player.h);
+
+            // 目
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(-6, -8, 5, 8);
+            ctx.fillRect(3, -8, 5, 8);
+
+            ctx.restore();
+        }
+
+        function drawShopPreview() {
+            const shopCanvas = document.getElementById('shopPreviewCanvas');
+            const sCtx = shopCanvas.getContext('2d');
+            sCtx.clearRect(0, 0, 100, 100);
+            sCtx.fillStyle = primaryColor;
+            sCtx.fillRect(25, 25, 50, 50);
+            sCtx.strokeStyle = secondaryColor;
+            sCtx.lineWidth = 4;
+            sCtx.strokeRect(25, 25, 50, 50);
+            sCtx.fillStyle = '#ffffff';
+            sCtx.fillRect(38, 38, 7, 10);
+            sCtx.fillRect(55, 38, 7, 10);
+        }
+
+        function gameLoop(now) {
+            const elapsed = now - lastTime;
+            lastTime = now;
+            accumulator += elapsed;
+
+            while (accumulator >= FIXED_TIMESTEP) {
+                updatePhysics();
+                accumulator -= FIXED_TIMESTEP;
+            }
+
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.onload = () => {
+            setupEventListeners();
+            updateLevelCard();
+
+            // ショップのパレット初期化
+            const primaryPalette = document.getElementById('palette-primary');
+            const secondaryPalette = document.getElementById('palette-secondary');
+            const colors = ['#00f3ff', '#ff007f', '#ffe600', '#22c55e', '#a855f7', '#ffffff'];
+
+            colors.forEach(c => {
+                const b1 = document.createElement('div');
+                b1.className = 'w-8 h-8 rounded-full cursor-pointer border-2 border-white/40 hover:scale-110 transition';
+                b1.style.backgroundColor = c;
+                b1.onclick = () => { primaryColor = c; drawShopPreview(); };
+                primaryPalette.appendChild(b1);
+
+                const b2 = document.createElement('div');
+                b2.className = 'w-8 h-8 rounded-full cursor-pointer border-2 border-white/40 hover:scale-110 transition';
+                b2.style.backgroundColor = c;
+                b2.onclick = () => { secondaryColor = c; drawShopPreview(); };
+                secondaryPalette.appendChild(b2);
+            });
+
+            requestAnimationFrame(gameLoop);
+        };
+    </script>
+
+    <!-- ハブに戻るボタン -->
+    <style>
+        .hub-back-btn {
+            position: fixed;
+            right: 14px;
+            bottom: 14px;
+            z-index: 9999;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(14, 17, 22, 0.85);
+            border: 1px solid #5ac8fa;
+            color: #5ac8fa;
+            font: 700 12px/1 system-ui, -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+            text-decoration: none;
+            box-shadow: 0 0 10px rgba(90, 200, 250, 0.35);
+            white-space: nowrap;
+        }
+        .hub-back-btn:hover { background: rgba(20, 40, 60, 0.9); }
+    </style>
+    <a class="hub-back-btn" href="../index.html">DAICHI-OTN GAME HUBに戻る</a>
+</body>
+</html>
