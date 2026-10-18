@@ -53,7 +53,7 @@ const GAMES = [
         "status": "live",
         "desc": "地面を掘り進めるアクションのプロトタイプ。React と Phaser で作っています。",
         "url": "games/horihori/index.html",
-        "icon": "games/icons/icon-1792214574671.png",
+        "icon": "games/icons/icon-horihori.png",
         "detail": "地面を掘り進めるアクションのプロトタイプです。掘削や部品に関わる仕組みを実装しながら、遊びの形を探っている開発中の作品です。React と Phaser で作られています。",
         "color": "#4a3a1a"
     }
