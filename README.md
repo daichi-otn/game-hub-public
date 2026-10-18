@@ -13,7 +13,7 @@
 | プログラム言語系クイズ | ミニ作品 | https://daichi-otn.github.io/game-hub-public/games/quiz1.html |
 | なぞなぞ系クイズ | ミニ作品 | https://daichi-otn.github.io/game-hub-public/games/quiz2.html |
 | ホリホリドリラー | ミニ作品 | https://daichi-otn.github.io/game-hub-public/games/horihori/index.html |
-| Lap One | 準備中 | URL なし |
+| Lap One | 公開中 | https://daichi-otn.github.io/Lap-One-game/ |
 
 ## 構成
 
