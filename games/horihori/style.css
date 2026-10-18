@@ -54,6 +54,7 @@ html, body {
 /* 16:9 のステージ。UI は container query 単位(cqw)で Phaser キャンバスと同じ比率に拡縮する */
 .stage {
     position: relative;
+    touch-action: none;
     width: min(100vw, calc(100vh * 16 / 9));
     aspect-ratio: 16 / 9;
     container-type: size;
