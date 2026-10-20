@@ -58,3 +58,10 @@ const GAMES = [
         "color": "#4a3a1a"
     }
 ];
+
+const HUB_SETTINGS = {
+    title: "DAICHI-OTN GAME HUB",
+    heroLabel: "注目のゲーム",
+    footerText: "DAICHI-OTN",
+    footerUrl: "https://github.com/daichi-otn"
+};

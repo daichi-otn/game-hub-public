@@ -400,7 +400,7 @@
 <body>
 
     <header>
-        <div class="logo">DAICHI-OTN<span> GAME HUB</span></div>
+        <div class="logo" id="logo"></div>
         <div class="stats" id="stats"></div>
     </header>
 
@@ -432,7 +432,7 @@
         </section>
     </main>
 
-    <footer>&copy; <a href="https://github.com/daichi-otn" target="_blank" rel="noopener" style="color:inherit">DAICHI-OTN</a></footer>
+    <footer>&copy; <a id="footer-link" target="_blank" rel="noopener" style="color:inherit"></a></footer>
 
     <script src="games-data.js"></script>
     <script>
@@ -449,6 +449,20 @@
             } else {
                 el.textContent = icon;
             }
+        }
+
+        // 表示しないゲームは一覧から外す。サイト設定は games-data.js の HUB_SETTINGS を使う
+        const VISIBLE_GAMES = GAMES.filter(g => !g.hidden);
+        const SETTINGS = Object.assign(
+            { title: "DAICHI-OTN GAME HUB", heroLabel: "注目のゲーム", footerText: "DAICHI-OTN", footerUrl: "https://github.com/daichi-otn" },
+            typeof HUB_SETTINGS !== "undefined" ? HUB_SETTINGS : {}
+        );
+
+        function applySettings() {
+            document.title = SETTINGS.title;
+            $("logo").textContent = SETTINGS.title;
+            $("footer-link").textContent = SETTINGS.footerText;
+            $("footer-link").href = SETTINGS.footerUrl;
         }
 
         const STATUS_LABEL = { live: "公開中", wip: "準備中", local: "ミニ作品" };
@@ -497,7 +511,7 @@
         }
 
         function renderHero() {
-            const game = GAMES.find(g => g.status === "live" && g.url);
+            const game = VISIBLE_GAMES.find(g => g.featured && g.url) || VISIBLE_GAMES.find(g => g.status === "live" && g.url);
             const hero = $("hero");
             if (!game) {
                 hero.style.display = "none";
@@ -506,17 +520,18 @@
             hero.href = game.url;
             hero.dataset.title = game.title;
             hero.innerHTML =
-                '<div class="hero-label">注目のゲーム</div>' +
+                '<div class="hero-label"></div>' +
                 '<h2 class="hero-title"></h2>' +
                 '<p class="hero-desc"></p>' +
                 '<span class="play">▶ 遊ぶ</span>';
             hero.querySelector(".hero-title").textContent = game.title;
+            hero.querySelector(".hero-label").textContent = SETTINGS.heroLabel;
             hero.querySelector(".hero-desc").textContent = game.desc;
         }
 
         function renderStats() {
-            const live = GAMES.filter(g => statusKey(g) === "live").length;
-            $("stats").textContent = "全 " + GAMES.length + " 作品 ・ 公開中 " + live;
+            const live = VISIBLE_GAMES.filter(g => statusKey(g) === "live").length;
+            $("stats").textContent = "全 " + VISIBLE_GAMES.length + " 作品 ・ 公開中 " + live;
         }
 
         function renderTabs() {
@@ -595,7 +610,7 @@
 
         function renderRecent() {
             const plays = loadPlays();
-            const games = GAMES
+            const games = VISIBLE_GAMES
                 .filter(g => g.url && plays[g.title])
                 .sort((a, b) => plays[b.title].last - plays[a.title].last)
                 .slice(0, 4);
@@ -608,7 +623,7 @@
         function renderGrid() {
             const grid = $("grid");
             grid.innerHTML = "";
-            const list = sortGames(GAMES.filter(matches));
+            const list = sortGames(VISIBLE_GAMES.filter(matches));
             if (list.length === 0) {
                 const empty = document.createElement("div");
                 empty.className = "empty";
@@ -624,11 +639,11 @@
             });
         }
 
-        // 下部のゲーム紹介（GAMES の順番どおり）
+        // 下部のゲーム紹介（VISIBLE_GAMES の順番どおり）
         function renderDetails() {
             const box = $("details");
             box.innerHTML = "";
-            GAMES.forEach(game => {
+            VISIBLE_GAMES.forEach(game => {
                 const card = document.createElement("div");
                 card.className = "detail-card";
 
@@ -690,6 +705,7 @@
             setTimeout(() => { window.location.href = target; }, 400);
         });
 
+        applySettings();
         renderHero();
         renderStats();
         renderTabs();
