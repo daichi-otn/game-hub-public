@@ -341,6 +341,60 @@
             .search { width: 100%; }
             .toolbar { flex-direction: column; align-items: stretch; }
         }
+        /* ランチャー風の演出・最近遊んだ・並べ替え */
+        .hidden { display: none !important; }
+
+        .section-head {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin: 0 0 12px;
+        }
+
+        .recent { margin-top: 28px; }
+
+        .recent-row {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .recent-row .tile { flex: 0 0 220px; }
+
+        .sort {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            color: var(--text);
+            border-radius: 999px;
+            padding: 8px 14px;
+            font: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .thumb { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .tile:hover .thumb { transform: scale(1.06); }
+
+        .tile-meta {
+            margin-top: auto;
+            padding-top: 8px;
+            font-size: 0.72rem;
+            color: var(--accent);
+        }
+
+        @keyframes tileIn {
+            from { opacity: 0; transform: translateY(14px) scale(0.97); }
+            to { opacity: 1; transform: none; }
+        }
+
+        .tile.enter { animation: tileIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .tile.enter { animation: none; }
+            .thumb { transition: none; }
+        }
     </style>
 </head>
 <body>
@@ -354,8 +408,19 @@
         <!-- 注目のゲーム（公開中で url のあるものの先頭） -->
         <a class="hero" id="hero" href="#"></a>
 
+        <section class="recent hidden" id="recent">
+            <div class="section-head">最近遊んだ</div>
+            <div class="recent-row" id="recent-row"></div>
+        </section>
+
         <div class="toolbar">
             <div class="tabs" id="tabs"></div>
+            <select class="sort" id="sort" aria-label="並べ替え">
+                <option>おすすめ</option>
+                <option>最近遊んだ順</option>
+                <option>よく遊ぶ順</option>
+                <option>名前順</option>
+            </select>
             <input class="search" id="search" type="search" placeholder="ゲームを検索">
         </div>
 
@@ -389,7 +454,36 @@
         const STATUS_LABEL = { live: "公開中", wip: "準備中", local: "ミニ作品" };
         const FILTERS = ["すべて", "公開中", "準備中", "ミニ作品"];
 
-        const state = { filter: "すべて", query: "" };
+        const state = { filter: "すべて", query: "", sort: "おすすめ" };
+
+        // 遊んだ記録（このブラウザの中だけに保存）
+        const PLAY_KEY = "daichi-otn-hub-plays";
+
+        function loadPlays() {
+            try { return JSON.parse(localStorage.getItem(PLAY_KEY) || "{}"); } catch (e) { return {}; }
+        }
+
+        function recordPlay(title) {
+            const plays = loadPlays();
+            const cur = plays[title] || { count: 0, last: 0 };
+            plays[title] = { count: cur.count + 1, last: Date.now() };
+            try { localStorage.setItem(PLAY_KEY, JSON.stringify(plays)); } catch (e) { /* 保存できなくても遊べるようにする */ }
+        }
+
+        function formatDate(ts) {
+            const d = new Date(ts);
+            return (d.getMonth() + 1) + "/" + d.getDate();
+        }
+
+        function renderMeta(game) {
+            const rec = loadPlays()[game.title];
+            const meta = document.createElement("div");
+            meta.className = "tile-meta";
+            meta.textContent = rec
+                ? "遊んだ " + rec.count + " 回 ・ 最終 " + formatDate(rec.last)
+                : "まだ遊んでいません";
+            return meta;
+        }
 
         const $ = id => document.getElementById(id);
 
@@ -410,6 +504,7 @@
                 return;
             }
             hero.href = game.url;
+            hero.dataset.title = game.title;
             hero.innerHTML =
                 '<div class="hero-label">注目のゲーム</div>' +
                 '<h2 class="hero-title"></h2>' +
@@ -452,6 +547,7 @@
             const el = document.createElement(hasUrl ? "a" : "div");
             el.className = "tile" + (hasUrl ? "" : " disabled");
             if (hasUrl) el.href = game.url;
+            el.dataset.title = game.title;
 
             const thumb = document.createElement("div");
             thumb.className = "thumb";
@@ -479,14 +575,40 @@
 
             head.append(title, badge);
             body.append(head, desc);
+            if (hasUrl) body.appendChild(renderMeta(game));
             el.append(thumb, body);
             return el;
+        }
+
+        function sortGames(list) {
+            const plays = loadPlays();
+            const copy = [...list];
+            if (state.sort === "最近遊んだ順") {
+                copy.sort((a, b) => ((plays[b.title] || {}).last || 0) - ((plays[a.title] || {}).last || 0));
+            } else if (state.sort === "よく遊ぶ順") {
+                copy.sort((a, b) => ((plays[b.title] || {}).count || 0) - ((plays[a.title] || {}).count || 0));
+            } else if (state.sort === "名前順") {
+                copy.sort((a, b) => a.title.localeCompare(b.title, "ja"));
+            }
+            return copy;
+        }
+
+        function renderRecent() {
+            const plays = loadPlays();
+            const games = GAMES
+                .filter(g => g.url && plays[g.title])
+                .sort((a, b) => plays[b.title].last - plays[a.title].last)
+                .slice(0, 4);
+            $("recent").classList.toggle("hidden", games.length === 0);
+            const row = $("recent-row");
+            row.innerHTML = "";
+            games.forEach(game => row.appendChild(renderTile(game)));
         }
 
         function renderGrid() {
             const grid = $("grid");
             grid.innerHTML = "";
-            const list = GAMES.filter(matches);
+            const list = sortGames(GAMES.filter(matches));
             if (list.length === 0) {
                 const empty = document.createElement("div");
                 empty.className = "empty";
@@ -494,7 +616,12 @@
                 grid.appendChild(empty);
                 return;
             }
-            list.forEach(game => grid.appendChild(renderTile(game)));
+            list.forEach((game, i) => {
+                const tile = renderTile(game);
+                tile.classList.add("enter");
+                tile.style.animationDelay = (i * 60) + "ms";
+                grid.appendChild(tile);
+            });
         }
 
         // 下部のゲーム紹介（GAMES の順番どおり）
@@ -547,12 +674,18 @@
             renderGrid();
         });
 
-        // ページ移動時のフェードアウト
+        $("sort").addEventListener("change", e => {
+            state.sort = e.target.value;
+            renderGrid();
+        });
+
+        // ページ移動時のフェードアウトと、遊んだ記録
         document.addEventListener("click", e => {
             const link = e.target.closest("a.tile, a.hero");
             if (!link || !link.getAttribute("href") || link.getAttribute("href") === "#") return;
             e.preventDefault();
             const target = link.getAttribute("href");
+            if (link.dataset.title) recordPlay(link.dataset.title);
             document.body.classList.add("fade-out");
             setTimeout(() => { window.location.href = target; }, 400);
         });
@@ -560,6 +693,7 @@
         renderHero();
         renderStats();
         renderTabs();
+        renderRecent();
         renderGrid();
         renderDetails();
     </script>
