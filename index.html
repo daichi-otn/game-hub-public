@@ -186,6 +186,7 @@
         }
 
         .tile {
+            position: relative;
             display: flex;
             flex-direction: column;
             background: var(--panel);
@@ -384,6 +385,44 @@
             color: var(--accent);
         }
 
+        /* お気に入り・ランダム・記録のリセット */
+        .fav {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            z-index: 1;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1px solid var(--line);
+            background: rgba(14, 17, 22, 0.7);
+            color: var(--muted);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s, transform 0.2s;
+        }
+
+        .fav:hover { color: var(--text); transform: scale(1.1); }
+        .fav.on { color: #ffd60a; border-color: #ffd60a; }
+
+        .page-tools {
+            display: flex;
+            justify-content: center;
+            margin-top: 28px;
+        }
+
+        .text-btn {
+            background: none;
+            border: none;
+            color: var(--muted);
+            font: inherit;
+            font-size: 0.8rem;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .text-btn:hover { color: var(--text); }
+
         @keyframes tileIn {
             from { opacity: 0; transform: translateY(14px) scale(0.97); }
             to { opacity: 1; transform: none; }
@@ -421,7 +460,8 @@
                 <option>よく遊ぶ順</option>
                 <option>名前順</option>
             </select>
-            <input class="search" id="search" type="search" placeholder="ゲームを検索">
+            <button class="sort" id="random" type="button">🎲 ランダム</button>
+            <input class="search" id="search" type="search" placeholder="ゲームを検索（/ キーで移動）">
         </div>
 
         <div class="grid" id="grid"></div>
@@ -430,6 +470,10 @@
             <h2>ゲーム紹介</h2>
             <div id="details"></div>
         </section>
+
+        <div class="page-tools">
+            <button class="text-btn" id="clear-plays" type="button">遊んだ記録をリセット</button>
+        </div>
     </main>
 
     <footer>&copy; <a id="footer-link" target="_blank" rel="noopener" style="color:inherit"></a></footer>
@@ -466,7 +510,7 @@
         }
 
         const STATUS_LABEL = { live: "公開中", wip: "準備中", local: "ミニ作品" };
-        const FILTERS = ["すべて", "公開中", "準備中", "ミニ作品"];
+        const FILTERS = ["すべて", "お気に入り", "公開中", "準備中", "ミニ作品"];
 
         const state = { filter: "すべて", query: "", sort: "おすすめ" };
 
@@ -482,6 +526,26 @@
             const cur = plays[title] || { count: 0, last: 0 };
             plays[title] = { count: cur.count + 1, last: Date.now() };
             try { localStorage.setItem(PLAY_KEY, JSON.stringify(plays)); } catch (e) { /* 保存できなくても遊べるようにする */ }
+        }
+
+        // お気に入り（これもこのブラウザの中だけに保存）
+        const FAV_KEY = "daichi-otn-hub-favs";
+
+        function loadFavs() {
+            try { return JSON.parse(localStorage.getItem(FAV_KEY) || "[]"); } catch (e) { return []; }
+        }
+
+        function isFav(title) {
+            return loadFavs().includes(title);
+        }
+
+        // 追加したら true、外したら false を返す
+        function toggleFav(title) {
+            const favs = loadFavs();
+            const i = favs.indexOf(title);
+            if (i >= 0) favs.splice(i, 1); else favs.push(title);
+            try { localStorage.setItem(FAV_KEY, JSON.stringify(favs)); } catch (e) { /* 保存できなくても使えるようにする */ }
+            return i < 0;
         }
 
         function formatDate(ts) {
@@ -531,7 +595,8 @@
 
         function renderStats() {
             const live = VISIBLE_GAMES.filter(g => statusKey(g) === "live").length;
-            $("stats").textContent = "全 " + VISIBLE_GAMES.length + " 作品 ・ 公開中 " + live;
+            const favs = VISIBLE_GAMES.filter(g => isFav(g.title)).length;
+            $("stats").textContent = "全 " + VISIBLE_GAMES.length + " 作品 ・ 公開中 " + live + " ・ お気に入り " + favs;
         }
 
         function renderTabs() {
@@ -551,7 +616,8 @@
         }
 
         function matches(game) {
-            const statusOk = state.filter === "すべて" || filterName(game) === state.filter;
+            const statusOk = state.filter === "すべて"
+                || (state.filter === "お気に入り" ? isFav(game.title) : filterName(game) === state.filter);
             const q = state.query.trim().toLowerCase();
             const queryOk = !q || game.title.toLowerCase().includes(q) || game.desc.toLowerCase().includes(q);
             return statusOk && queryOk;
@@ -591,8 +657,27 @@
             head.append(title, badge);
             body.append(head, desc);
             if (hasUrl) body.appendChild(renderMeta(game));
-            el.append(thumb, body);
+            el.append(thumb, body, renderFavButton(game));
             return el;
+        }
+
+        function renderFavButton(game) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "fav" + (isFav(game.title) ? " on" : "");
+            btn.title = "お気に入り";
+            btn.setAttribute("aria-label", "お気に入り");
+            btn.textContent = "★";
+            btn.addEventListener("click", e => {
+                // カードのリンクを開かず、ボタンだけを切り替える
+                e.preventDefault();
+                e.stopPropagation();
+                const on = toggleFav(game.title);
+                btn.classList.toggle("on", on);
+                renderStats();
+                if (state.filter === "お気に入り") renderGrid();
+            });
+            return btn;
         }
 
         function sortGames(list) {
@@ -695,14 +780,39 @@
         });
 
         // ページ移動時のフェードアウトと、遊んだ記録
+        function go(target, title) {
+            if (title) recordPlay(title);
+            document.body.classList.add("fade-out");
+            setTimeout(() => { window.location.href = target; }, 400);
+        }
+
         document.addEventListener("click", e => {
             const link = e.target.closest("a.tile, a.hero");
             if (!link || !link.getAttribute("href") || link.getAttribute("href") === "#") return;
             e.preventDefault();
-            const target = link.getAttribute("href");
-            if (link.dataset.title) recordPlay(link.dataset.title);
-            document.body.classList.add("fade-out");
-            setTimeout(() => { window.location.href = target; }, 400);
+            go(link.getAttribute("href"), link.dataset.title);
+        });
+
+        // ランダムに 1 本選んで遊ぶ（遊べるものだけが対象）
+        $("random").addEventListener("click", () => {
+            const pool = VISIBLE_GAMES.filter(g => g.url);
+            if (pool.length === 0) return;
+            const game = pool[Math.floor(Math.random() * pool.length)];
+            go(game.url, game.title);
+        });
+
+        // 「/」キーで検索欄へ（入力中は無効）
+        document.addEventListener("keydown", e => {
+            if (e.key !== "/" || e.target.matches("input, textarea, select")) return;
+            e.preventDefault();
+            $("search").focus();
+        });
+
+        $("clear-plays").addEventListener("click", () => {
+            if (!confirm("遊んだ記録をリセットしますか？（お気に入りは残ります）")) return;
+            try { localStorage.removeItem(PLAY_KEY); } catch (e) { /* 何もしない */ }
+            renderRecent();
+            renderGrid();
         });
 
         applySettings();
