@@ -72,7 +72,7 @@ const GAMES = [
 
 const HUB_SETTINGS = {
     "title": "DAICHI-OTN GAME HUB",
-    "heroLabel": "注目のゲーム",
+    "heroLabel": "最初のゲーム",
     "footerText": "DAICHI-OTN",
     "footerUrl": "https://github.com/daichi-otn"
 };
