@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAICHI-OTN GAME HUB</title>
+    <style>
+        :root {
+            --bg: #0e1116;
+            --panel: #171c24;
+            --panel-hi: #1f2631;
+            --line: #2a3340;
+            --text: #e8ecf2;
+            --muted: #8b95a5;
+            --accent: #5ac8fa;
+            --live: #34c759;
+            --wip: #ffb020;
+            --local: #b392f0;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body { margin: 0; padding: 0; }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            transition: opacity 0.4s ease;
+        }
+
+        body.fade-out { opacity: 0; }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--line);
+            position: sticky;
+            top: 0;
+            background: rgba(14, 17, 22, 0.9);
+            backdrop-filter: blur(8px);
+            z-index: 10;
+        }
+
+        .logo {
+            font-weight: 900;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+        }
+
+        .logo span { color: var(--accent); }
+
+        .stats {
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px 20px 48px;
+        }
+
+        /* 注目のゲーム */
+        .hero {
+            position: relative;
+            text-decoration: none;
+            color: var(--text);
+            border-radius: 20px;
+            padding: 36px 32px;
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            background: linear-gradient(135deg, #1d3b5c 0%, #2d1f5e 60%, #5a2a4a 100%);
+            border: 1px solid var(--line);
+            overflow: hidden;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 80% 20%, rgba(90, 200, 250, 0.35), transparent 50%);
+            pointer-events: none;
+        }
+
+        .hero:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .hero-label {
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: var(--accent);
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .hero-title {
+            font-size: 2rem;
+            font-weight: 900;
+            margin: 0 0 8px;
+            position: relative;
+        }
+
+        .hero-desc {
+            margin: 0 0 16px;
+            color: #c9d3e0;
+            max-width: 560px;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        .play {
+            display: inline-block;
+            align-self: flex-start;
+            background: var(--accent);
+            color: #0b1a24;
+            font-weight: 800;
+            padding: 10px 22px;
+            border-radius: 999px;
+            position: relative;
+        }
+
+        /* フィルター */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 36px 0 16px;
+            flex-wrap: wrap;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            background: var(--panel);
+            color: var(--muted);
+            border: 1px solid var(--line);
+            padding: 7px 16px;
+            border-radius: 999px;
+            font: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .tab:hover { color: var(--text); }
+
+        .tab.active {
+            color: var(--text);
+            border-color: var(--accent);
+        }
+
+        .search {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            color: var(--text);
+            border-radius: 999px;
+            padding: 8px 16px;
+            font: inherit;
+            font-size: 0.9rem;
+            width: 220px;
+            outline: none;
+        }
+
+        .search:focus { border-color: var(--accent); }
+
+        /* ゲーム一覧 */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            gap: 16px;
+        }
+
+        .tile {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            overflow: hidden;
+            color: var(--text);
+            text-decoration: none;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s, background 0.25s;
+        }
+
+        a.tile:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent);
+            background: var(--panel-hi);
+        }
+
+        a.tile:active { transform: scale(0.97); }
+
+        .thumb {
+            height: 130px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+
+        .tile-body {
+            padding: 14px 16px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+        }
+
+        .tile-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .tile-title {
+            font-weight: 800;
+            font-size: 1rem;
+            line-height: 1.3;
+        }
+
+        .tile-desc {
+            margin: 0;
+            font-size: 0.82rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        .status {
+            flex-shrink: 0;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 3px 9px;
+            border-radius: 999px;
+            color: #0e1116;
+        }
+
+        .status.live { background: var(--live); }
+        .status.wip { background: var(--wip); }
+        .status.local { background: var(--local); }
+
+        .tile.disabled { opacity: 0.6; cursor: default; }
+
+        .empty {
+            color: var(--muted);
+            text-align: center;
+            padding: 40px 0;
+            grid-column: 1 / -1;
+        }
+
+        /* ゲーム紹介（下部） */
+        .details {
+            margin-top: 48px;
+        }
+
+        .details h2 {
+            font-size: 1.3rem;
+            font-weight: 900;
+            margin: 0 0 16px;
+            letter-spacing: 1px;
+        }
+
+        .detail-card {
+            display: grid;
+            grid-template-columns: 56px 1fr;
+            gap: 16px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 14px;
+        }
+
+        .detail-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+
+        .detail-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 6px;
+        }
+
+        .detail-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+        }
+
+        .detail-text {
+            margin: 0 0 10px;
+            color: #c9d3e0;
+            line-height: 1.7;
+            font-size: 0.92rem;
+        }
+
+        .detail-link {
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-decoration: none;
+        }
+
+        .detail-link:hover { text-decoration: underline; }
+
+        footer {
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--muted);
+            padding: 24px;
+            border-top: 1px solid var(--line);
+        }
+
+        @media (max-width: 600px) {
+            header { padding: 14px 16px; }
+            .stats { display: none; }
+            .hero { padding: 24px 20px; min-height: 180px; }
+            .hero-title { font-size: 1.5rem; }
+            .search { width: 100%; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+        }
+        /* ランチャー風の演出・最近遊んだ・並べ替え */
+        .hidden { display: none !important; }
+
+        .section-head {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin: 0 0 12px;
+        }
+
+        .recent { margin-top: 28px; }
+
+        .recent-row {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .recent-row .tile { flex: 0 0 220px; }
+
+        .sort {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            color: var(--text);
+            border-radius: 999px;
+            padding: 8px 14px;
+            font: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .thumb { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .tile:hover .thumb { transform: scale(1.06); }
+
+        .tile-meta {
+            margin-top: auto;
+            padding-top: 8px;
+            font-size: 0.72rem;
+            color: var(--accent);
+        }
+
+        /* お気に入り・ランダム・記録のリセット */
+        .fav {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            z-index: 1;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1px solid var(--line);
+            background: rgba(14, 17, 22, 0.7);
+            color: var(--muted);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s, transform 0.2s;
+        }
+
+        .fav:hover { color: var(--text); transform: scale(1.1); }
+        .fav.on { color: #ffd60a; border-color: #ffd60a; }
+
+        .page-tools {
+            display: flex;
+            justify-content: center;
+            margin-top: 28px;
+        }
+
+        .text-btn {
+            background: none;
+            border: none;
+            color: var(--muted);
+            font: inherit;
+            font-size: 0.8rem;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .text-btn:hover { color: var(--text); }
+
+        @keyframes tileIn {
+            from { opacity: 0; transform: translateY(14px) scale(0.97); }
+            to { opacity: 1; transform: none; }
+        }
+
+        .tile.enter { animation: tileIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .tile.enter { animation: none; }
+            .thumb { transition: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo" id="logo"></div>
+        <div class="stats" id="stats"></div>
+    </header>
+
+    <main>
+        <!-- 注目のゲーム（公開中で url のあるものの先頭） -->
+        <a class="hero" id="hero" href="#"></a>
+
+        <section class="recent hidden" id="recent">
+            <div class="section-head">最近遊んだ</div>
+            <div class="recent-row" id="recent-row"></div>
+        </section>
+
+        <div class="toolbar">
+            <div class="tabs" id="tabs"></div>
+            <select class="sort" id="sort" aria-label="並べ替え">
+                <option>おすすめ</option>
+                <option>最近遊んだ順</option>
+                <option>よく遊ぶ順</option>
+                <option>名前順</option>
+            </select>
+            <button class="sort" id="random" type="button">🎲 ランダム</button>
+            <input class="search" id="search" type="search" placeholder="ゲームを検索（/ キーで移動）">
+        </div>
+
+        <div class="grid" id="grid"></div>
+
+        <section class="details">
+            <h2>ゲーム紹介</h2>
+            <div id="details"></div>
+        </section>
+
+        <div class="page-tools">
+            <button class="text-btn" id="clear-plays" type="button">遊んだ記録をリセット</button>
+        </div>
+    </main>
+
+    <footer>&copy; <a id="footer-link" target="_blank" rel="noopener" style="color:inherit"></a></footer>
+
+    <script src="games-data.js"></script>
+    <script>
+
+        // アイコンが画像ファイルのパスなら画像を、そうでなければ絵文字をそのまま表示する
+        function setIcon(el, icon) {
+            el.textContent = '';
+            if (/\.(png|jpe?g|gif|webp|svg)$/i.test(icon)) {
+                const img = document.createElement('img');
+                img.src = icon;
+                img.alt = '';
+                img.style.cssText = 'width:70%;height:70%;object-fit:contain;border-radius:22%';
+                el.appendChild(img);
+            } else {
+                el.textContent = icon;
+            }
+        }
+
+        // 表示しないゲームは一覧から外す。サイト設定は games-data.js の HUB_SETTINGS を使う
+        const VISIBLE_GAMES = GAMES.filter(g => !g.hidden);
+        const SETTINGS = Object.assign(
+            { title: "DAICHI-OTN GAME HUB", heroLabel: "注目のゲーム", footerText: "DAICHI-OTN", footerUrl: "https://github.com/daichi-otn" },
+            typeof HUB_SETTINGS !== "undefined" ? HUB_SETTINGS : {}
+        );
+
+        function applySettings() {
+            document.title = SETTINGS.title;
+            $("logo").textContent = SETTINGS.title;
+            $("footer-link").textContent = SETTINGS.footerText;
+            $("footer-link").href = SETTINGS.footerUrl;
+        }
+
+        const STATUS_LABEL = { live: "公開中", wip: "準備中", local: "ミニ作品" };
+        const FILTERS = ["すべて", "お気に入り", "公開中", "準備中", "ミニ作品"];
+
+        const state = { filter: "すべて", query: "", sort: "おすすめ" };
+
+        // 遊んだ記録（このブラウザの中だけに保存）
+        const PLAY_KEY = "daichi-otn-hub-plays";
+
+        function loadPlays() {
+            try { return JSON.parse(localStorage.getItem(PLAY_KEY) || "{}"); } catch (e) { return {}; }
+        }
+
+        function recordPlay(title) {
+            const plays = loadPlays();
+            const cur = plays[title] || { count: 0, last: 0 };
+            plays[title] = { count: cur.count + 1, last: Date.now() };
+            try { localStorage.setItem(PLAY_KEY, JSON.stringify(plays)); } catch (e) { /* 保存できなくても遊べるようにする */ }
+        }
+
+        // お気に入り（これもこのブラウザの中だけに保存）
+        const FAV_KEY = "daichi-otn-hub-favs";
+
+        function loadFavs() {
+            try { return JSON.parse(localStorage.getItem(FAV_KEY) || "[]"); } catch (e) { return []; }
+        }
+
+        function isFav(title) {
+            return loadFavs().includes(title);
+        }
+
+        // 追加したら true、外したら false を返す
+        function toggleFav(title) {
+            const favs = loadFavs();
+            const i = favs.indexOf(title);
+            if (i >= 0) favs.splice(i, 1); else favs.push(title);
+            try { localStorage.setItem(FAV_KEY, JSON.stringify(favs)); } catch (e) { /* 保存できなくても使えるようにする */ }
+            return i < 0;
+        }
+
+        function formatDate(ts) {
+            const d = new Date(ts);
+            return (d.getMonth() + 1) + "/" + d.getDate();
+        }
+
+        function renderMeta(game) {
+            const rec = loadPlays()[game.title];
+            const meta = document.createElement("div");
+            meta.className = "tile-meta";
+            meta.textContent = rec
+                ? "遊んだ " + rec.count + " 回 ・ 最終 " + formatDate(rec.last)
+                : "まだ遊んでいません";
+            return meta;
+        }
+
+        const $ = id => document.getElementById(id);
+
+        // url が空のものは、status に関係なく「準備中」として扱う
+        function statusKey(game) {
+            return game.url ? game.status : "wip";
+        }
+
+        function filterName(game) {
+            return STATUS_LABEL[statusKey(game)];
+        }
+
+        function renderHero() {
+            const game = VISIBLE_GAMES.find(g => g.featured && g.url) || VISIBLE_GAMES.find(g => g.status === "live" && g.url);
+            const hero = $("hero");
+            if (!game) {
+                hero.style.display = "none";
+                return;
+            }
+            hero.href = game.url;
+            hero.dataset.title = game.title;
+            hero.innerHTML =
+                '<div class="hero-label"></div>' +
+                '<h2 class="hero-title"></h2>' +
+                '<p class="hero-desc"></p>' +
+                '<span class="play">▶ 遊ぶ</span>';
+            hero.querySelector(".hero-title").textContent = game.title;
+            hero.querySelector(".hero-label").textContent = SETTINGS.heroLabel;
+            hero.querySelector(".hero-desc").textContent = game.desc;
+        }
+
+        function renderStats() {
+            const live = VISIBLE_GAMES.filter(g => statusKey(g) === "live").length;
+            const favs = VISIBLE_GAMES.filter(g => isFav(g.title)).length;
+            $("stats").textContent = "全 " + VISIBLE_GAMES.length + " 作品 ・ 公開中 " + live + " ・ お気に入り " + favs;
+        }
+
+        function renderTabs() {
+            const tabs = $("tabs");
+            tabs.innerHTML = "";
+            FILTERS.forEach(name => {
+                const btn = document.createElement("button");
+                btn.className = "tab" + (state.filter === name ? " active" : "");
+                btn.textContent = name;
+                btn.addEventListener("click", () => {
+                    state.filter = name;
+                    renderTabs();
+                    renderGrid();
+                });
+                tabs.appendChild(btn);
+            });
+        }
+
+        function matches(game) {
+            const statusOk = state.filter === "すべて"
+                || (state.filter === "お気に入り" ? isFav(game.title) : filterName(game) === state.filter);
+            const q = state.query.trim().toLowerCase();
+            const queryOk = !q || game.title.toLowerCase().includes(q) || game.desc.toLowerCase().includes(q);
+            return statusOk && queryOk;
+        }
+
+        function renderTile(game) {
+            const hasUrl = Boolean(game.url);
+            const el = document.createElement(hasUrl ? "a" : "div");
+            el.className = "tile" + (hasUrl ? "" : " disabled");
+            if (hasUrl) el.href = game.url;
+            el.dataset.title = game.title;
+
+            const thumb = document.createElement("div");
+            thumb.className = "thumb";
+            thumb.style.background = "linear-gradient(135deg, " + game.color + ", #0e1116)";
+            setIcon(thumb, game.icon);
+
+            const body = document.createElement("div");
+            body.className = "tile-body";
+
+            const head = document.createElement("div");
+            head.className = "tile-head";
+
+            const title = document.createElement("span");
+            title.className = "tile-title";
+            title.textContent = game.title;
+
+            const badge = document.createElement("span");
+            const key = statusKey(game);
+            badge.className = "status " + key;
+            badge.textContent = STATUS_LABEL[key];
+
+            const desc = document.createElement("p");
+            desc.className = "tile-desc";
+            desc.textContent = game.desc;
+
+            head.append(title, badge);
+            body.append(head, desc);
+            if (hasUrl) body.appendChild(renderMeta(game));
+            el.append(thumb, body, renderFavButton(game));
+            return el;
+        }
+
+        function renderFavButton(game) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "fav" + (isFav(game.title) ? " on" : "");
+            btn.title = "お気に入り";
+            btn.setAttribute("aria-label", "お気に入り");
+            btn.textContent = "★";
+            btn.addEventListener("click", e => {
+                // カードのリンクを開かず、ボタンだけを切り替える
+                e.preventDefault();
+                e.stopPropagation();
+                const on = toggleFav(game.title);
+                btn.classList.toggle("on", on);
+                renderStats();
+                if (state.filter === "お気に入り") renderGrid();
+            });
+            return btn;
+        }
+
+        function sortGames(list) {
+            const plays = loadPlays();
+            const copy = [...list];
+            if (state.sort === "最近遊んだ順") {
+                copy.sort((a, b) => ((plays[b.title] || {}).last || 0) - ((plays[a.title] || {}).last || 0));
+            } else if (state.sort === "よく遊ぶ順") {
+                copy.sort((a, b) => ((plays[b.title] || {}).count || 0) - ((plays[a.title] || {}).count || 0));
+            } else if (state.sort === "名前順") {
+                copy.sort((a, b) => a.title.localeCompare(b.title, "ja"));
+            }
+            return copy;
+        }
+
+        function renderRecent() {
+            const plays = loadPlays();
+            const games = VISIBLE_GAMES
+                .filter(g => g.url && plays[g.title])
+                .sort((a, b) => plays[b.title].last - plays[a.title].last)
+                .slice(0, 4);
+            $("recent").classList.toggle("hidden", games.length === 0);
+            const row = $("recent-row");
+            row.innerHTML = "";
+            games.forEach(game => row.appendChild(renderTile(game)));
+        }
+
+        function renderGrid() {
+            const grid = $("grid");
+            grid.innerHTML = "";
+            const list = sortGames(VISIBLE_GAMES.filter(matches));
+            if (list.length === 0) {
+                const empty = document.createElement("div");
+                empty.className = "empty";
+                empty.textContent = "該当するゲームがありません";
+                grid.appendChild(empty);
+                return;
+            }
+            list.forEach((game, i) => {
+                const tile = renderTile(game);
+                tile.classList.add("enter");
+                tile.style.animationDelay = (i * 60) + "ms";
+                grid.appendChild(tile);
+            });
+        }
+
+        // 下部のゲーム紹介（VISIBLE_GAMES の順番どおり）
+        function renderDetails() {
+            const box = $("details");
+            box.innerHTML = "";
+            VISIBLE_GAMES.forEach(game => {
+                const card = document.createElement("div");
+                card.className = "detail-card";
+
+                const icon = document.createElement("div");
+                icon.className = "detail-icon";
+                icon.style.background = "linear-gradient(135deg, " + game.color + ", #0e1116)";
+                setIcon(icon, game.icon);
+
+                const info = document.createElement("div");
+
+                const head = document.createElement("div");
+                head.className = "detail-head";
+                const title = document.createElement("span");
+                title.className = "detail-title";
+                title.textContent = game.title;
+                const badge = document.createElement("span");
+                const key = statusKey(game);
+                badge.className = "status " + key;
+                badge.textContent = STATUS_LABEL[key];
+                head.append(title, badge);
+
+                const text = document.createElement("p");
+                text.className = "detail-text";
+                text.textContent = game.detail;
+
+                info.append(head, text);
+
+                if (game.url) {
+                    const link = document.createElement("a");
+                    link.className = "detail-link";
+                    link.href = game.url;
+                    link.textContent = "遊ぶ →";
+                    info.appendChild(link);
+                }
+
+                card.append(icon, info);
+                box.appendChild(card);
+            });
+        }
+
+        $("search").addEventListener("input", e => {
+            state.query = e.target.value;
+            renderGrid();
+        });
+
+        $("sort").addEventListener("change", e => {
+            state.sort = e.target.value;
+            renderGrid();
+        });
+
+        // ページ移動時のフェードアウトと、遊んだ記録
+        function go(target, title) {
+            if (title) recordPlay(title);
+            document.body.classList.add("fade-out");
+            setTimeout(() => { window.location.href = target; }, 400);
+        }
+
+        document.addEventListener("click", e => {
+            const link = e.target.closest("a.tile, a.hero");
+            if (!link || !link.getAttribute("href") || link.getAttribute("href") === "#") return;
+            e.preventDefault();
+            go(link.getAttribute("href"), link.dataset.title);
+        });
+
+        // ランダムに 1 本選んで遊ぶ（遊べるものだけが対象）
+        $("random").addEventListener("click", () => {
+            const pool = VISIBLE_GAMES.filter(g => g.url);
+            if (pool.length === 0) return;
+            const game = pool[Math.floor(Math.random() * pool.length)];
+            go(game.url, game.title);
+        });
+
+        // 「/」キーで検索欄へ（入力中は無効）
+        document.addEventListener("keydown", e => {
+            if (e.key !== "/" || e.target.matches("input, textarea, select")) return;
+            e.preventDefault();
+            $("search").focus();
+        });
+
+        $("clear-plays").addEventListener("click", () => {
+            if (!confirm("遊んだ記録をリセットしますか？（お気に入りは残ります）")) return;
+            try { localStorage.removeItem(PLAY_KEY); } catch (e) { /* 何もしない */ }
+            renderRecent();
+            renderGrid();
+        });
+
+        applySettings();
+        renderHero();
+        renderStats();
+        renderTabs();
+        renderRecent();
+        renderGrid();
+        renderDetails();
+    </script>
+
+</body>
+</html>
