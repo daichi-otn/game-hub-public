@@ -334,6 +334,123 @@
             border-top: 1px solid var(--line);
         }
 
+        /* Steam ライブラリ風テーマ */
+        :root {
+            --bg: #171d25;
+            --panel: #1b2838;
+            --panel-hi: #22364b;
+            --line: #2a475e;
+            --text: #d6d7d8;
+            --muted: #8f98a0;
+            --accent: #66c0f4;
+            --live: #67c1f5;
+            --wip: #e5b85c;
+            --local: #8eb8d8;
+        }
+
+        body {
+            background:
+                radial-gradient(ellipse at 50% -20%, rgba(42, 79, 110, .55), transparent 58%),
+                linear-gradient(180deg, #192b3d 0, #171d25 240px, #171d25 100%);
+        }
+
+        header {
+            min-height: 74px;
+            padding: 0 32px;
+            background: rgba(23, 29, 37, .96);
+            border-bottom: 1px solid #0d141c;
+            box-shadow: 0 2px 12px rgba(0,0,0,.35);
+        }
+
+        .logo {
+            font-size: 1.25rem;
+            letter-spacing: 1px;
+            color: #fff;
+        }
+
+        .logo::before { content: "◉"; color: var(--accent); margin-right: 10px; }
+
+        .stats { color: #8ba9bd; }
+
+        main { max-width: 1240px; padding: 34px 28px 64px; }
+
+        .hero {
+            min-height: 310px;
+            padding: 42px 48px;
+            border: 0;
+            border-radius: 3px;
+            background:
+                linear-gradient(90deg, rgba(12, 22, 32, .94) 0%, rgba(12, 22, 32, .68) 42%, rgba(12, 22, 32, .12) 100%),
+                linear-gradient(135deg, #24577d, #142638 60%, #263a4b);
+            box-shadow: 0 8px 28px rgba(0,0,0,.35);
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 0 48%;
+            background-image: var(--hero-image);
+            background-position: center;
+            background-size: cover;
+            opacity: .5;
+            mix-blend-mode: screen;
+        }
+
+        .hero::after { background: linear-gradient(90deg, transparent, rgba(102,192,244,.22)); }
+        .hero-label { color: var(--accent); text-transform: uppercase; font-size: .7rem; letter-spacing: 3px; }
+        .hero-title { font-size: clamp(2rem, 4vw, 3.25rem); text-shadow: 0 2px 10px #000; }
+        .hero-desc { color: #d8e4ed; max-width: 520px; }
+        .play { background: linear-gradient(90deg, #75c9f5, #4aa4d3); color: #10202d; border-radius: 2px; padding: 11px 25px; }
+
+        .library-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            margin: 38px 0 16px;
+            border-bottom: 1px solid #29465b;
+            padding-bottom: 12px;
+        }
+
+        .library-heading h1 { margin: 0; font-size: 1.7rem; font-weight: 400; color: #fff; }
+        .library-heading p { margin: 0; color: var(--muted); font-size: .8rem; }
+
+        .toolbar { margin: 16px 0 18px; padding: 10px; background: rgba(12, 20, 29, .56); border: 1px solid #233a4c; }
+        .tab { border: 0; border-radius: 2px; background: transparent; color: #8ba9bd; }
+        .tab:hover, .tab.active { color: #fff; background: #2a526e; border-color: transparent; }
+        .search, .sort { border-radius: 2px; background: #101820; border-color: #35556d; color: #d6d7d8; }
+
+        .grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+        .tile { flex-direction: row; min-height: 112px; border: 0; border-radius: 2px; background: #1b2838; box-shadow: 0 2px 5px rgba(0,0,0,.25); }
+        a.tile:hover { transform: translateX(4px); border-color: transparent; background: #2a475e; box-shadow: 0 5px 14px rgba(0,0,0,.35); }
+        .thumb { width: 148px; min-width: 148px; height: auto; min-height: 112px; font-size: 2.5rem; }
+        .tile-body { padding: 13px 14px; min-width: 0; }
+        .tile-head { align-items: start; }
+        .tile-title { color: #fff; font-weight: 500; }
+        .tile-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: #a6b4c0; }
+        .status { border-radius: 2px; color: #17212b; padding: 3px 7px; font-size: .65rem; }
+        .fav { top: 7px; right: 7px; background: rgba(15, 24, 33, .8); border-radius: 2px; }
+        .tile-meta { color: #67c1f5; }
+
+        .recent { margin-top: 30px; }
+        .section-head { color: #fff; font-size: 1.05rem; letter-spacing: .2px; font-weight: 400; }
+        .recent-row .tile { flex-basis: 320px; }
+        .details { margin-top: 52px; }
+        .details h2 { font-size: 1.5rem; font-weight: 400; color: #fff; border-bottom: 1px solid #29465b; padding-bottom: 12px; }
+        .detail-card { border: 0; border-radius: 2px; background: #1b2838; }
+        .detail-text { color: #b8c6d2; }
+        footer { background: #101820; border-color: #0d141c; }
+
+        @media (max-width: 600px) {
+            header { padding: 0 16px; }
+            main { padding: 22px 14px 48px; }
+            .hero { padding: 28px 24px; min-height: 240px; }
+            .hero::before { inset: 0; opacity: .25; }
+            .library-heading { display: block; }
+            .library-heading p { margin-top: 6px; }
+            .tile { min-height: 96px; }
+            .thumb { width: 112px; min-width: 112px; min-height: 96px; }
+        }
+
         @media (max-width: 600px) {
             header { padding: 14px 16px; }
             .stats { display: none; }
@@ -451,6 +568,14 @@
             <div class="section-head">最近遊んだ</div>
             <div class="recent-row" id="recent-row"></div>
         </section>
+
+        <div class="library-heading">
+            <div>
+                <h1>ゲームライブラリ</h1>
+                <p>あなたのゲームコレクション</p>
+            </div>
+            <p>DAICHI-OTN GAME HUB</p>
+        </div>
 
         <div class="toolbar">
             <div class="tabs" id="tabs"></div>
@@ -583,6 +708,11 @@
             }
             hero.href = game.url;
             hero.dataset.title = game.title;
+            if (/\.(png|jpe?g|gif|webp|svg)$/i.test(game.icon)) {
+                hero.style.setProperty("--hero-image", "url('" + game.icon + "')");
+            } else {
+                hero.style.removeProperty("--hero-image");
+            }
             hero.innerHTML =
                 '<div class="hero-label"></div>' +
                 '<h2 class="hero-title"></h2>' +
