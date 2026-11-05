@@ -10,7 +10,9 @@ const GAMES = [
         "url": "https://daichi-otn.github.io/C-cim-game/",
         "icon": "games/icons/icon-1792214986813.png",
         "detail": "本格的な街づくりを 3D で楽しめます。道路は 10 種類から直線・曲線で敷設でき、一方通行や橋・トンネルも使えます。道路沿いに住宅・商業・工業の区画を塗ると、需要に応じて建物が自動で建ちます。税収と維持費のバランスを取りながら予算を管理し、電力・水道・下水の施設を道路でつないで街へ供給します。工場や騒音による病気には、公園や防音壁で対処できます。",
-        "color": "#1f4e79"
+        "color": "#1f4e79",
+        "image": "",
+        "heroImage": ""
     },
     {
         "title": "ジオメトリ・ダッシュ：ネオン・リズム",
@@ -19,7 +21,9 @@ const GAMES = [
         "url": "games/geometry.html",
         "icon": "🔷",
         "detail": "スペースやタップでジャンプして、トゲや箱を避けながらゴールを目指すリズムアクションです。全 3 レベルで、後のレベルほど速くなります。旗を置いて、その場所から練習できる練習モードもあります。",
-        "color": "#3d1f6e"
+        "color": "#3d1f6e",
+        "image": "",
+        "heroImage": ""
     },
     {
         "title": "プログラム言語系クイズ",
@@ -28,7 +32,9 @@ const GAMES = [
         "url": "games/quiz1.html",
         "icon": "💻",
         "detail": "HTML・Web・プログラミングの基礎に関する 4 択クイズです。全 75 問の問題プールから出題され、答えのあとに解説が出ます。",
-        "color": "#1d4d3a"
+        "color": "#1d4d3a",
+        "image": "",
+        "heroImage": ""
     },
     {
         "title": "なぞなぞ系クイズ",
@@ -37,7 +43,9 @@ const GAMES = [
         "url": "games/quiz2.html",
         "icon": "🧩",
         "detail": "なぞなぞ・言葉遊び、ひらめき、雑学の 4 択クイズです。全 75 問の問題プールから出題され、答えのあとに解説が出ます。",
-        "color": "#5a2a4a"
+        "color": "#5a2a4a",
+        "image": "",
+        "heroImage": ""
     },
     {
         "title": "Lap One",
@@ -46,7 +54,9 @@ const GAMES = [
         "url": "https://daichi-otn.github.io/Lap-One-game/",
         "icon": "🏎️",
         "detail": "ブラウザで遊べる 3D レースです。初回レースは運営会社が支給する最低性能の車で参加費はかからず、2 戦目以降は参加費 1000 coin を払って出走します。優勝すると賞金 3000 × コース倍率、完走すると参加賞 500 coin、失格すると賞金はありません。コインで車をカスタマイズでき、天候の変わるコースで CPU と競います。スマートフォンやタブレットでも遊べます。",
-        "color": "#7a3b10"
+        "color": "#7a3b10",
+        "image": "",
+        "heroImage": ""
     },
     {
         "title": "ホリホリドリラー",
@@ -55,7 +65,9 @@ const GAMES = [
         "url": "games/horihori/index.html",
         "icon": "games/icons/icon-1792214574671.png",
         "detail": "地面を掘り進めるアクションのプロトタイプです。掘削や部品に関わる仕組みを実装しながら、遊びの形を探っている開発中の作品です。React と Phaser で作られています。",
-        "color": "#4a3a1a"
+        "color": "#4a3a1a",
+        "image": "",
+        "heroImage": ""
     },
     {
         "title": "YNA ACE",
@@ -66,7 +78,9 @@ const GAMES = [
         "icon": "games/icons/icon-1793867402730.png",
         "color": "#1f4e79",
         "hidden": false,
-        "featured": false
+        "featured": false,
+        "image": "",
+        "heroImage": ""
     }
 ];
 
